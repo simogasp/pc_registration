@@ -246,7 +246,9 @@ def main(args: argparse.Namespace):
 
     # difference between initial and final transformation
     rot_err, trans_err = transformation_error(result_icp.transformation, trans_init)
-    logger.info(f"Rotation error (radians): {rot_err}, Translation error: {trans_err}")
+    logger.info(
+        f"Rotation error (radians): {rot_err:.4f} (degrees: {np.degrees(rot_err):.4f}), Translation error: {trans_err:.4f}"
+    )
     # compute the rms error between initial and final translation
     registration_rmse = compute_rmse_transformations(
         np.linalg.inv(result_icp.transformation), np.eye(4), source
