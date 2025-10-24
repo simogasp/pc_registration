@@ -34,9 +34,9 @@ def draw_registration_result(
     source_temp.paint_uniform_color([1, 0.706, 0])  # yellow
     target_temp.paint_uniform_color([0, 0.651, 0.929])  # cyan
     source_temp.transform(transformation)
-    o3d.visualization.draw_geometries(       # type: ignore
+    o3d.visualization.draw_geometries(  # type: ignore
         [source_temp, target_temp], window_name=window_name
-    )  
+    )
 
 
 def print_point_cloud_info(
