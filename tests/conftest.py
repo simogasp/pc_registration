@@ -14,7 +14,7 @@ def sample_point_cloud():
         for y in [-1, 0, 1]:
             for z in [-1, 0, 1]:
                 points.append([x, y, z])
-    
+
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(np.array(points))
     return pcd
@@ -29,21 +29,13 @@ def identity_transformation():
 @pytest.fixture
 def sample_rotation_matrix():
     """Return a sample 3x3 rotation matrix (90° around z-axis)."""
-    return np.array([
-        [0, -1, 0],
-        [1, 0, 0],
-        [0, 0, 1]
-    ])
+    return np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
 
 
 @pytest.fixture
 def sample_transformation_matrix():
     """Return a sample 4x4 transformation matrix."""
     T = np.eye(4)
-    T[:3, :3] = np.array([
-        [0, -1, 0],
-        [1, 0, 0],
-        [0, 0, 1]
-    ])
+    T[:3, :3] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
     T[:3, 3] = [1.0, 2.0, 3.0]
     return T
