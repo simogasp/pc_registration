@@ -56,7 +56,12 @@ def print_point_cloud_info(
         Information is logged at DEBUG level for the number of points and
         bounding box coordinates.
     """
-    logging.debug(f"{name} has {len(pcd.points)} points")
-    min_bound = pcd.get_min_bound()
-    max_bound = pcd.get_max_bound()
-    logging.debug(f"{name} bounding box: min={min_bound}, max={max_bound}")
+    num_points = len(pcd.points)
+    aabb = pcd.get_axis_aligned_bounding_box()
+    obb = pcd.get_oriented_bounding_box()
+    logging.info(f"Point Cloud '{name}':")
+    logging.info(f"\tNumber of points: {num_points}")
+    logging.info(
+        f"\tAxis-Aligned Bounding Box: min {aabb.min_bound}, max {aabb.max_bound}"
+    )
+    logging.info(f"\tOriented Bounding Box: center {obb.center}, extent {obb.extent}")
