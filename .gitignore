@@ -8,3 +8,19 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+*.cover
+reports/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
