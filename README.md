@@ -1,5 +1,11 @@
 # Point Cloud Registration
 
+[![CI](https://github.com/simogasp/pc_registration/actions/workflows/ci.yml/badge.svg)](https://github.com/simogasp/pc_registration/actions/workflows/ci.yml)
+[![Tests](https://github.com/simogasp/pc_registration/actions/workflows/test.yml/badge.svg)](https://github.com/simogasp/pc_registration/actions/workflows/test.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![codecov](https://codecov.io/gh/simogasp/pc_registration/graph/badge.svg?token=V51VN2ARZN)](https://codecov.io/gh/simogasp/pc_registration)
+
 This project provides implementations of various point cloud registration algorithms using Open3D, including:
 
 - **ICP (Iterative Closest Point)**: Point-to-point and point-to-plane variants
@@ -33,7 +39,7 @@ registration/
 ## Prerequisites
 
 - Python 3.12 or higher
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- [uv](https://github.com/astral-sh/uv) (recommended) or `pip`
 
 ## Setup Instructions
 
