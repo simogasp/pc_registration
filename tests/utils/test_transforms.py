@@ -1,12 +1,13 @@
-"""Unit tests for common utility functions."""
+"""Unit tests for transformation and rotation utilities."""
 
-import pytest
 import numpy as np
-from common import (
+import pytest
+
+from registration.utils.transforms import (
     axis_angle_from_rotation,
     rotation_error_angle,
-    translation_error,
     transformation_error,
+    translation_error,
 )
 
 

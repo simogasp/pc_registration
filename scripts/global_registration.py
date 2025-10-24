@@ -1,10 +1,18 @@
 #! /usr/bin/env python3
 
-import open3d as o3d
-import numpy as np
 import argparse
 import logging
-from common import *
+
+import numpy as np
+import open3d as o3d
+
+from registration.utils.logging import setup_logging
+from registration.utils.metrics import compute_rmse_transformations
+from registration.utils.transforms import transformation_error
+from registration.visualization.viewer import (
+    draw_registration_result,
+    print_point_cloud_info,
+)
 
 logger = logging.getLogger(__name__)
 

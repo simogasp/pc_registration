@@ -1,7 +1,11 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "registration"
 version = "0.1.0"
-description = "Add your description here"
+description = "Point cloud registration using Open3D"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -15,6 +19,9 @@ test = [
     "pytest-cov>=4.1.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -24,7 +31,7 @@ addopts = [
     "-v",
     "--strict-markers",
     "--strict-config",
-    "--cov=.",
+    "--cov=src",
     "--cov-report=term-missing",
     "--cov-report=html:reports/coverage",
     "--cov-report=xml:reports/coverage.xml",
@@ -32,12 +39,13 @@ addopts = [
 ]
 
 [tool.coverage.run]
-source = ["."]
+source = ["src"]
 omit = [
     "tests/*",
     ".venv/*",
     "**/__pycache__/*",
     "reports/*",
+    "scripts/*",
 ]
 
 [tool.coverage.report]

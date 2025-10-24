@@ -6,6 +6,30 @@ This project provides implementations of various point cloud registration algori
 - **Global Registration**: RANSAC-based feature matching with FPFH features
 - **Point Cloud Visualization**: Load and display point clouds with bounding boxes
 
+## Project Structure
+
+```none
+registration/
+├── src/
+│   └── registration/          # Main package
+│       ├── utils/             # Utility modules
+│       │   ├── logging.py     # Colored logging configuration
+│       │   ├── transforms.py  # Rotation and transformation utilities
+│       │   └── metrics.py     # RMSE and error metrics
+│       └── visualization/
+│           └── viewer.py      # Point cloud visualization
+├── scripts/                   # Experimental/executable scripts
+│   ├── global_registration.py # RANSAC + ICP pipeline
+│   ├── icp_vanilla.py         # Simple ICP registration
+│   └── load_and_display.py    # Point cloud viewer
+├── tests/                     # Unit tests
+│   ├── utils/
+│   │   └── test_transforms.py
+│   └── conftest.py
+├── reports/                   # Test coverage reports
+└── pyproject.toml             # Project configuration
+```
+
 ## Prerequisites
 
 - Python 3.12 or higher
@@ -37,15 +61,23 @@ pip install uv
 git clone <repository-url>
 cd registration
 
-# Install dependencies (uv will automatically create a virtual environment in .venv)
-uv sync
+
+# Automatically sync all dependencies and install in editable mode
+# with uv
+uv sync --extra test
+
+# or with pip
+uv pip install -e ".[test]"
 ```
+
+> [!NOTE] The `-e` flag installs the package in "editable mode", meaning changes to the source code are immediately reflected without reinstalling. This is perfect for development!
 
 That's it! uv will:
 
 - Create a virtual environment in `.venv/`
 - Install all dependencies from `pyproject.toml`
-- Keep everything synchronized
+- Install the `registration` package in editable mode
+- Install testing dependencies
 
 ### Option 2: Using pip (Traditional Method)
 
@@ -63,10 +95,8 @@ source .venv/bin/activate
 # On Windows:
 .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-# Or install from pyproject.toml:
-pip install -e .
+# Install the package in editable mode
+pip install -e ".[test]"
 ```
 
 ## Usage
@@ -78,7 +108,7 @@ With uv, you don't need to activate the virtual environment manually. Just prefi
 #### 1. Global Registration (RANSAC + ICP)
 
 ```bash
-uv run python global_registration.py \
+uv run python scripts/global_registration.py \
   --source data/source.ply \
   --target data/target.ply \
   --voxel-size 0.05 \
@@ -96,7 +126,7 @@ uv run python global_registration.py \
 #### 2. Vanilla ICP Registration
 
 ```bash
-uv run python icp_vanilla.py \
+uv run python scripts/icp_vanilla.py \
   --source data/source.ply \
   --target data/target.ply \
   --threshold 0.02 \
@@ -114,7 +144,7 @@ uv run python icp_vanilla.py \
 #### 3. Load and Display Point Cloud
 
 ```bash
-uv run python load_and_display.py \
+uv run python scripts/load_and_display.py \
   --input data/pointcloud.ply \
   -v INFO
 ```
@@ -122,7 +152,7 @@ uv run python load_and_display.py \
 **Options:**
 
 - `--input`: Path to point cloud file (required)
-- `-v, --verbose`: Logging level (default: WARNING)
+- `-v, --verbose`: Logging level (default: INFO)
 
 ### Running Scripts with pip/venv
 
@@ -135,7 +165,46 @@ source .venv/bin/activate  # macOS/Linux
 .venv\Scripts\activate  # Windows
 
 # Run scripts
-python global_registration.py --source data/source.ply --target data/target.ply --voxel-size 0.05
-python icp_vanilla.py --source data/source.ply --target data/target.ply --threshold 0.02
-python load_and_display.py --input data/pointcloud.ply
+python scripts/global_registration.py --source data/source.ply --target data/target.ply --voxel-size 0.05
+python scripts/icp_vanilla.py --source data/source.ply --target data/target.ply --threshold 0.02
+python scripts/load_and_display.py --input data/pointcloud.ply
 ```
+
+## Using the Package in Python
+
+After installation, you can import and use the utilities in your own scripts:
+
+```python
+import numpy as np
+from registration.utils.logging import setup_logging
+from registration.utils.transforms import transformation_error
+from registration.utils.metrics import compute_rmse_between_point_clouds
+from registration.visualization.viewer import draw_registration_result
+
+# Set up colored logging
+setup_logging()
+
+# Use transformation utilities
+T_est = np.eye(4)
+T_gt = np.eye(4)
+rot_err, trans_err = transformation_error(T_est, T_gt)
+```
+
+## Running Tests
+
+```bash
+# With uv
+uv run pytest
+
+# With pip (after activating venv)
+pytest
+
+# With coverage report
+uv run pytest --cov=src --cov-report=html
+```
+
+Test reports are generated in the `reports/` directory:
+
+- `reports/coverage/` - HTML coverage report
+- `reports/coverage.xml` - XML coverage report (for CI)
+- `reports/coverage.json` - JSON coverage report

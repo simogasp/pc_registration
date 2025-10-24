@@ -1,9 +1,12 @@
 #! /usr/bin/env python3
 
-import open3d as o3d
 import argparse
 import logging
-from common import *
+
+import open3d as o3d
+
+from registration.utils.logging import setup_logging
+from registration.visualization.viewer import print_point_cloud_info
 
 logger = logging.getLogger(__name__)
 

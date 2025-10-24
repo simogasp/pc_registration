@@ -1,10 +1,13 @@
 #! /usr/bin/env python3
 
-import open3d as o3d
-import numpy as np
 import argparse
 import logging
-from common import *
+
+import numpy as np
+import open3d as o3d
+
+from registration.utils.logging import setup_logging
+from registration.visualization.viewer import draw_registration_result
 
 logger = logging.getLogger(__name__)
 
