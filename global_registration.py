@@ -43,7 +43,7 @@ def preprocess_point_cloud(pcd, voxel_size: float) -> tuple:
     return pcd_down, pcd_fpfh
 
 
-def prepare_dataset(source_file: str, target_file: str, voxel_size: float):
+def prepare_dataset(source_file: str, target_file: str, voxel_size: float, trans_init=np.identity(4)) -> tuple:
     """Load and prepare point cloud datasets for registration.
     
     Loads source and target point clouds from files, applies an initial transformation
@@ -79,10 +79,12 @@ def prepare_dataset(source_file: str, target_file: str, voxel_size: float):
 
     logger.info("Preprocessing source point cloud")
     source_down, source_fpfh = preprocess_point_cloud(source, voxel_size)
+    print_point_cloud_info(source_down, "Downsampled source")
 
     logger.info("Preprocessing target point cloud")
     target_down, target_fpfh = preprocess_point_cloud(target, voxel_size)
-    
+    print_point_cloud_info(target_down, "Downsampled target")
+
     return source, target, source_down, target_down, source_fpfh, target_fpfh
 
 
@@ -181,12 +183,21 @@ def main(args: argparse.Namespace):
                                                 source_fpfh, target_fpfh,
                                                 voxel_size)
     logger.info(f"RANSAC result: {result_ransac}")
-    draw_registration_result(source_down, target_down, result_ransac.transformation, "RANSAC global registration")
+    draw_registration_result(source_down, target_down, result_ransac.transformation, "RANSAC global registration on downsampled point clouds")
+    draw_registration_result(source, target, result_ransac.transformation, "RANSAC global registration on original point clouds")
 
     result_icp = refine_registration(source, target, voxel_size, result_ransac.transformation)
     logger.info(f"ICP refinement result: {result_icp}")
     logger.info(f"Estimated matrix:\n{result_icp.transformation}")
+    logger.info(f"Result fitness: {result_icp.fitness}, inlier RMSE: {result_icp.inlier_rmse}")
     draw_registration_result(source, target, result_icp.transformation, "ICP refinement")
+
+    # difference between initial and final transformation
+    rot_err, trans_err = transformation_error(result_icp.transformation, trans_init)   
+    logger.info(f"Rotation error (radians): {rot_err}, Translation error: {trans_err}") 
+    # compute the rms error between initial and final translation
+    registration_rmse = compute_rmse_transformations(np.linalg.inv(result_icp.transformation), np.eye(4), source)
+    logger.info(f"Registration RMSE: {registration_rmse}")
 
 
 if __name__ == "__main__":
