@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     # add input file argument
-    argparse = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Load and display a point cloud with its bounding boxes"
     )
-    argparse.add_argument("--input", type=str, help="Input file path", required=True)
-    argparse.add_argument(
+    parser.add_argument("--input", type=str, help="Input file path", required=True)
+    parser.add_argument(
         "-v",
         "--verbose",
         type=str,
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         default="INFO",
         help="Set logging level (default: WARNING)",
     )
-    args = argparse.parse_args()
+    args = parser.parse_args()
 
     # Set logging level based on user selection
     setup_logging(getattr(logging, args.verbose))
@@ -41,4 +41,6 @@ if __name__ == "__main__":
     logger.info(
         "Displaying axis_aligned_bounding_box in red and oriented bounding box in green ..."
     )
-    o3d.visualization.draw([pcd, axis_aligned_bounding_box, oriented_bounding_box])
+    o3d.visualization.draw_geometries(                 # type: ignore
+        [pcd, axis_aligned_bounding_box, oriented_bounding_box]
+    )

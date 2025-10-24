@@ -34,6 +34,11 @@ def compute_rmse_between_point_clouds(
         corresponds to target.points[i]). For registration evaluation, typically
         the source would be transformed before calling this function.
     """
+    if len(source._points) != len(target.points):
+        raise ValueError(
+            "Point clouds must have the same number of points to compute RMSE."
+        )
+
     source_points = np.asarray(source.points)
     target_points = np.asarray(target.points)
 
@@ -50,41 +55,22 @@ def compute_rmse_between_point_clouds(
 
 
 def compute_rmse_transformations(
-    source: o3d.geometry.PointCloud,
-    target: o3d.geometry.PointCloud,
-    T_est: np.ndarray,
-    T_gt: np.ndarray,
+    T_est: np.ndarray, T_gt: np.ndarray, pcd: o3d.geometry.PointCloud
 ) -> float:
-    """Compute RMSE after applying estimated and ground-truth transformations.
-
-    Transforms the source point cloud using both the estimated and ground truth
-    transformations, then computes the RMSE between the two transformed results.
-    This provides a measure of registration accuracy that accounts for both
-    rotation and translation errors.
+    """Compute the RMSE between two transformations applied to a point cloud.
 
     Args:
-        source: Source point cloud to transform.
-        target: Target point cloud (used for reference, not directly compared).
-        T_est: Estimated 4x4 transformation matrix.
-        T_gt: Ground truth 4x4 transformation matrix.
+        T_est: Estimated transformation (4x4 matrix).
+        T_gt: Ground truth transformation (4x4 matrix).
+        pcd: Point cloud to which the transformations will be applied.
 
     Returns:
-        The RMSE between the point cloud transformed with T_est and the one
-        transformed with T_gt.
-
-    Note:
-        The target point cloud is not used in the computation but is kept as
-        a parameter for consistency with typical registration evaluation workflows.
-        The function creates copies of the source to avoid modifying the original.
+        The root mean square error (RMSE) between the point clouds obtained
+        by applying T_est and T_gt to the input point cloud.
     """
-    # Apply estimated transformation to a copy of the source
-    source_copy_est = copy.deepcopy(source)
-    source_copy_est.transform(T_est)
-
-    # Apply ground truth transformation to another copy
-    source_copy_gt = copy.deepcopy(source)
-    source_copy_gt.transform(T_gt)
-
-    # Compute RMSE between the two transformed versions
-    rmse_val, _ = compute_rmse_between_point_clouds(source_copy_est, source_copy_gt)
-    return rmse_val
+    pcd_est = copy.deepcopy(pcd)
+    pcd_gt = copy.deepcopy(pcd)
+    pcd_est.transform(T_est)
+    pcd_gt.transform(T_gt)
+    rmse, _ = compute_rmse_between_point_clouds(pcd_est, pcd_gt)
+    return rmse

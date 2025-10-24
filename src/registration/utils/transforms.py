@@ -1,9 +1,11 @@
 """Transformation and rotation utilities."""
 
+from typing import Tuple
 import numpy as np
+import numpy.typing as npt
 
 
-def axis_angle_from_rotation(R: np.ndarray) -> tuple[np.ndarray, float]:
+def axis_angle_from_rotation(R: np.ndarray) -> Tuple[np.ndarray, float]:
     """Convert a rotation matrix to axis-angle representation.
 
     Extracts the rotation axis and angle from a 3x3 rotation matrix using
@@ -74,7 +76,7 @@ def rotation_error_angle(R_est: np.ndarray, R_gt: np.ndarray) -> float:
 
 def translation_error(
     R_est: np.ndarray, t_est: np.ndarray, R_gt: np.ndarray, t_gt: np.ndarray
-) -> tuple[float, np.ndarray]:
+) -> Tuple[float, npt.NDArray[np.floating]]:
     """Calculate the translation error between two transformations.
 
     Computes the translation error accounting for the rotation difference.
@@ -99,10 +101,11 @@ def translation_error(
     """
     R_err = R_est @ R_gt.T
     t_err = t_est - R_err @ t_gt
-    return np.linalg.norm(t_err), t_err  # (norm, vector)
+    norm = float(np.linalg.norm(t_err))
+    return norm, t_err  # (norm, vector)
 
 
-def transformation_error(T_est: np.ndarray, T_gt: np.ndarray) -> tuple[float, float]:
+def transformation_error(T_est: np.ndarray, T_gt: np.ndarray) -> Tuple[float, float]:
     """Calculate both rotation and translation errors between two transformations.
 
     Decomposes two 4x4 transformation matrices into rotation and translation

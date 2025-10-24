@@ -258,16 +258,16 @@ if __name__ == "__main__":
     # tutorial from here https://www.open3d.org/docs/0.10.0/tutorial/Advanced/global_registration.html#:~:text=We%20down%20sample%20the%20point,with%20similar%20local%20geometric%20structures
 
     # add input file argument
-    argparse = argparse.ArgumentParser(description="Global registration")
-    argparse.add_argument("--source", type=str, help="source file path", required=True)
-    argparse.add_argument("--target", type=str, help="taraget file path", required=True)
-    argparse.add_argument(
+    parser = argparse.ArgumentParser(description="Global registration")
+    parser.add_argument("--source", type=str, help="source file path", required=True)
+    parser.add_argument("--target", type=str, help="taraget file path", required=True)
+    parser.add_argument(
         "--voxel-size", type=float, help="voxels size for downsampling", default=0.05
     )
-    argparse.add_argument(
+    parser.add_argument(
         "--max_iter_icp", type=int, help="Input file path", default=2000
     )
-    argparse.add_argument(
+    parser.add_argument(
         "-v",
         "--verbose",
         type=str,
@@ -276,7 +276,7 @@ if __name__ == "__main__":
         help="Set logging level (default: WARNING)",
     )
 
-    input_args = argparse.parse_args()
+    input_args = parser.parse_args()
 
     # Set logging level based on user selection
     setup_logging(getattr(logging, input_args.verbose))

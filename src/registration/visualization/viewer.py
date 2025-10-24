@@ -11,6 +11,7 @@ def draw_registration_result(
     source: o3d.geometry.PointCloud,
     target: o3d.geometry.PointCloud,
     transformation: np.ndarray,
+    window_name: str,
 ) -> None:
     """Visualize the registration result by applying transformation to source.
 
@@ -22,6 +23,7 @@ def draw_registration_result(
         source: Source point cloud to be transformed and displayed.
         target: Target point cloud to be displayed.
         transformation: 4x4 transformation matrix to apply to the source.
+        window_name: Name of the visualization window.
 
     Note:
         This function blocks execution until the visualization window is closed.
@@ -32,12 +34,9 @@ def draw_registration_result(
     source_temp.paint_uniform_color([1, 0.706, 0])  # yellow
     target_temp.paint_uniform_color([0, 0.651, 0.929])  # cyan
     source_temp.transform(transformation)
-    o3d.visualization.draw_geometries(
-        [source_temp, target_temp],
-        window_name="Registration Result",
-        width=1024,
-        height=768,
-    )
+    o3d.visualization.draw_geometries(       # type: ignore
+        [source_temp, target_temp], window_name=window_name
+    )  
 
 
 def print_point_cloud_info(
