@@ -34,7 +34,7 @@ def compute_rmse_between_point_clouds(
         corresponds to target.points[i]). For registration evaluation, typically
         the source would be transformed before calling this function.
     """
-    if len(source._points) != len(target.points):
+    if len(source.points) != len(target.points):
         raise ValueError(
             "Point clouds must have the same number of points to compute RMSE."
         )
