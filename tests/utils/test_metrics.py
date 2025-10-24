@@ -404,7 +404,7 @@ class TestComputeRMSETransformations:
     def test_empty_point_cloud_transformations(self):
         """Test with empty point cloud."""
         import warnings
-        
+
         pcd = o3d.geometry.PointCloud()
         T1 = np.eye(4)
         T2 = np.eye(4)
