@@ -73,10 +73,7 @@ def prepare_dataset(source_file: str, target_file: str, voxel_size: float):
     #                          [1.0, 0.0, 0.0, 0.0],
     #                          [0.0, 1.0, 0.0, 0.0],
     #                          [0.0, 0.0, 0.0, 1.0]])
-    trans_init = np.asarray([[0.862, 0.011, -0.507, 0.05],
-                             [-0.139, 0.967, -0.215, 0.07],
-                             [0.487, 0.255, 0.835, -0.0004],
-                             [0.0, 0.0, 0.0, 1.0]])
+    
     source.transform(trans_init)
     draw_registration_result(source, target, np.identity(4), "Initial settings")
 
@@ -172,8 +169,13 @@ def main(args: argparse.Namespace):
     """
     voxel_size = args.voxel_size
 
+    trans_init = np.asarray([[0.862, 0.011, -0.507, 0.05],
+                             [-0.139, 0.967, -0.215, 0.07],
+                             [0.487, 0.255, 0.835, -0.0004],
+                             [0.0, 0.0, 0.0, 1.0]])
+
     source, target, source_down, target_down, source_fpfh, target_fpfh = prepare_dataset(args.source, args.target,
-                                                                                         voxel_size)
+                                                                                         voxel_size, trans_init)
 
     result_ransac = execute_global_registration(source_down, target_down,
                                                 source_fpfh, target_fpfh,
