@@ -76,7 +76,8 @@ uv sync --extra test
 uv pip install -e ".[test]"
 ```
 
-> [!NOTE] The `-e` flag installs the package in "editable mode", meaning changes to the source code are immediately reflected without reinstalling. This is perfect for development!
+> [!NOTE]
+> The `-e` flag installs the package in "editable mode", meaning changes to the source code are immediately reflected without reinstalling. This is perfect for development!
 
 That's it! uv will:
 
