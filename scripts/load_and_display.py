@@ -41,6 +41,6 @@ if __name__ == "__main__":
     logger.info(
         "Displaying axis_aligned_bounding_box in red and oriented bounding box in green ..."
     )
-    o3d.visualization.draw_geometries(  # type: ignore
+    o3d.visualization.draw(  # type: ignore
         [pcd, axis_aligned_bounding_box, oriented_bounding_box]
     )
