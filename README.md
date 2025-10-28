@@ -217,6 +217,6 @@ Test reports are generated in the `reports/` directory:
 - `reports/coverage.xml` - XML coverage report (for CI)
 - `reports/coverage.json` - JSON coverage report
 
-
 ## License
+
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsimogasp%2Fpc_registration.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsimogasp%2Fpc_registration?ref=badge_large)
