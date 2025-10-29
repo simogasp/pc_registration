@@ -132,6 +132,7 @@ def run_tests(quick: bool = False, verbose: bool = False) -> bool:
     elif quick:
         cmd.append("-q")
     
+    # Note: JUnit XML is always generated via pyproject.toml configuration
     if not quick:
         cmd.extend([
             "--cov=src",
@@ -143,6 +144,7 @@ def run_tests(quick: bool = False, verbose: bool = False) -> bool:
     
     if success and not quick:
         print(f"\n{Colors.CYAN}📊 Coverage report: reports/coverage/index.html{Colors.NC}")
+        print(f"{Colors.CYAN}📋 Test results: reports/junit.xml{Colors.NC}")
     
     return success
 

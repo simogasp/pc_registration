@@ -52,6 +52,16 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+    - name: Upload test results to Codecov
+      uses: codecov/test-results-action@v1
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+      with:
+        file: ./reports/junit.xml
+        flags: unittests
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
     - name: Upload coverage report
       uses: actions/upload-artifact@v5
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
