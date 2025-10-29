@@ -24,3 +24,5 @@ reports/
 *.swp
 *.swo
 *~
+/registration.egg-info/
+*.egg-info/
