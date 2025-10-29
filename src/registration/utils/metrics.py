@@ -50,13 +50,13 @@ def compute_rmse_between_point_clouds(
 
 
 def compute_rmse_transformations(
-    T_est: np.ndarray, T_gt: np.ndarray, pcd: o3d.geometry.PointCloud
+    transf_est: np.ndarray, transf_gt: np.ndarray, pcd: o3d.geometry.PointCloud
 ) -> float:
     """Compute the RMSE between two transformations applied to a point cloud.
 
     Args:
-        T_est: Estimated transformation (4x4 matrix).
-        T_gt: Ground truth transformation (4x4 matrix).
+        transf_est: Estimated transformation (4x4 matrix).
+        transf_gt: Ground truth transformation (4x4 matrix).
         pcd: Point cloud to which the transformations will be applied.
 
     Returns:
@@ -65,7 +65,7 @@ def compute_rmse_transformations(
     """
     pcd_est = copy.deepcopy(pcd)
     pcd_gt = copy.deepcopy(pcd)
-    pcd_est.transform(T_est)
-    pcd_gt.transform(T_gt)
+    pcd_est.transform(transf_est)
+    pcd_gt.transform(transf_gt)
     rmse, _ = compute_rmse_between_point_clouds(pcd_est, pcd_gt)
     return rmse
