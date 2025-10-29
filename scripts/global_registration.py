@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import time
 
 import numpy as np
 import open3d as o3d
@@ -78,9 +79,9 @@ def prepare_dataset(
             - target_fpfh: FPFH features of the downsampled target
     """
     logger.info("Load two point clouds and disturb initial pose")
-    source = o3d.io.read_point_cloud(source_file)
+    source: o3d.geometry.PointCloud = o3d.io.read_point_cloud(source_file)
     print_point_cloud_info(source, f"Source: {source_file}")
-    target = o3d.io.read_point_cloud(target_file)
+    target: o3d.geometry.PointCloud = o3d.io.read_point_cloud(target_file)
     print_point_cloud_info(target, f"Target: {target_file}")
     # trans_init = np.asarray([[0.0, 0.0, 1.0, 0.0],
     #                          [1.0, 0.0, 0.0, 0.0],
@@ -174,7 +175,7 @@ def refine_registration(source, target, voxel_size: float, initial_transformatio
         logger.info("Target point cloud does not have normals, estimating them...")
         target.estimate_normals(
             o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
-        )
+        )  # @TODO check radius parameter wrt the size of the model/voxel
 
     result = o3d.pipelines.registration.registration_icp(
         source,
@@ -217,6 +218,7 @@ def main(args: argparse.Namespace):
         prepare_dataset(args.source, args.target, voxel_size, trans_init)
     )
 
+    start = time.time()
     result_ransac = execute_global_registration(
         source_down,
         target_down,
@@ -225,6 +227,7 @@ def main(args: argparse.Namespace):
         voxel_size,
         args.max_iter_icp,
     )
+    logger.info(f"Global registration took {(time.time() - start): .3f} sec.")
     logger.info(f"RANSAC result: {result_ransac}")
     draw_registration_result(
         source_down,
@@ -250,15 +253,20 @@ def main(args: argparse.Namespace):
     draw_registration_result(
         source, target, result_icp.transformation, "ICP refinement"
     )
-
+    logger.debug(f"init mat:\n{trans_init}")
+    logger.debug(
+        f"product of the transformations:\n{result_icp.transformation @ (trans_init)}"
+    )
     # difference between initial and final transformation
-    rot_err, trans_err = transformation_error(result_icp.transformation, trans_init)
+    rot_err, trans_err = transformation_error(
+        result_icp.transformation, np.linalg.inv(trans_init)
+    )
     logger.info(
         f"Rotation error (radians): {rot_err:.4f} (degrees: {np.degrees(rot_err):.4f}), Translation error: {trans_err:.4f}"
     )
     # compute the rms error between initial and final translation (assuming that the points are corresponding)
     registration_rmse = compute_rmse_transformations(
-        np.linalg.inv(result_icp.transformation), np.eye(4), source
+        result_icp.transformation, np.linalg.inv(trans_init), source
     )
     logger.info(f"Registration RMSE: {registration_rmse}")
 
