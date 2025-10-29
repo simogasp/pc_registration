@@ -102,7 +102,7 @@ def prepare_dataset(
 
 
 def execute_global_registration(
-    source_down, target_down, source_fpfh, target_fpfh, voxel_size
+    source_down, target_down, source_fpfh, target_fpfh, voxel_size, max_iter_icp=2000
 ):
     """Execute RANSAC-based global registration between two point clouds.
 
@@ -116,6 +116,7 @@ def execute_global_registration(
         source_fpfh: FPFH features of the source point cloud.
         target_fpfh: FPFH features of the target point cloud.
         voxel_size: The voxel size used for downsampling, used to compute distance threshold.
+        max_iter_icp: Maximum number of ICP iterations for RANSAC.
 
     Returns:
         Registration result containing the transformation matrix, fitness score,
@@ -141,7 +142,7 @@ def execute_global_registration(
                 distance_threshold
             ),
         ],
-        o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999),
+        o3d.pipelines.registration.RANSACConvergenceCriteria(max_iter_icp, 0.999),
     )
     return result
 
@@ -217,7 +218,12 @@ def main(args: argparse.Namespace):
     )
 
     result_ransac = execute_global_registration(
-        source_down, target_down, source_fpfh, target_fpfh, voxel_size
+        source_down,
+        target_down,
+        source_fpfh,
+        target_fpfh,
+        voxel_size,
+        args.max_iter_icp,
     )
     logger.info(f"RANSAC result: {result_ransac}")
     draw_registration_result(
@@ -250,7 +256,7 @@ def main(args: argparse.Namespace):
     logger.info(
         f"Rotation error (radians): {rot_err:.4f} (degrees: {np.degrees(rot_err):.4f}), Translation error: {trans_err:.4f}"
     )
-    # compute the rms error between initial and final translation
+    # compute the rms error between initial and final translation (assuming that the points are corresponding)
     registration_rmse = compute_rmse_transformations(
         np.linalg.inv(result_icp.transformation), np.eye(4), source
     )
