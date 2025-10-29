@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # add input file argument
     argparse = argparse.ArgumentParser(description="Simple ICP example")
     argparse.add_argument("--source", type=str, help="source file path", required=True)
-    argparse.add_argument("--target", type=str, help="taraget file path", required=True)
+    argparse.add_argument("--target", type=str, help="target file path", required=True)
     argparse.add_argument(
         "--threshold", type=float, help="threshold for ICP", default=0.02
     )
