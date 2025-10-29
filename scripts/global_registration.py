@@ -66,6 +66,7 @@ def prepare_dataset(
         source_file: File path to the source point cloud.
         target_file: File path to the target point cloud.
         voxel_size: The size of the voxel for downsampling both point clouds.
+        trans_init: Initial transformation matrix to apply to the source cloud (default: identity matrix).
 
     Returns:
         A tuple containing:
