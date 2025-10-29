@@ -141,3 +141,43 @@ def transformation_error(t_est: np.ndarray, t_gt: np.ndarray) -> Tuple[float, fl
     rot_err = rotation_error_angle(rot_est, rot_gt)
     trans_err, trans_vec = translation_error(rot_est, tra_est, rot_gt, tra_gt)
     return rot_err, trans_err
+
+
+def generate_random_rotation_matrix() -> np.ndarray:
+    """Generate a random 3x3 rotation matrix.
+
+    Uses QR method to generate a random rotation matrix uniformly sampled from SO(3).
+
+    Returns:
+        A random 3x3 rotation matrix.
+    """
+    random_state = np.random.default_rng()
+    A = random_state.normal(size=(3, 3))
+    Q, R = np.linalg.qr(A)
+
+    # Ensure a proper rotation (det(Q) = +1)
+    if np.linalg.det(Q) < 0:
+        Q[:, 2] *= -1
+
+    return Q
+
+
+def is_rotation_matrix(mat: np.ndarray) -> bool:
+    """Check if a matrix is a valid rotation matrix.
+
+    A valid rotation matrix is orthogonal (R.T @ R = I) and has a determinant of +1.
+
+    Args:
+        mat: A square NxN matrix to check.
+
+    Returns:
+        True if the matrix is a valid rotation matrix, False otherwise.
+    """
+
+    # Check orthogonality
+    if not np.allclose(mat.T @ mat, np.eye(3)):
+        return False
+    # Check determinant
+    if not np.isclose(np.linalg.det(mat), 1):
+        return False
+    return True

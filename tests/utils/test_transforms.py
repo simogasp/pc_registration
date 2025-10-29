@@ -8,6 +8,8 @@ from registration.utils.transforms import (
     rotation_error_angle,
     transformation_error,
     translation_error,
+    generate_random_rotation_matrix,
+    is_rotation_matrix,
 )
 
 
@@ -177,3 +179,190 @@ class TestTransformationError:
         assert isinstance(trans_err, (float, np.floating)), (
             "Translation error should be a float"
         )
+
+
+class TestGenerateRandomRotationMatrix:
+    """Tests for generate_random_rotation_matrix function."""
+
+    def test_returns_3x3_matrix(self):
+        """Test that the function returns a 3x3 matrix."""
+        R = generate_random_rotation_matrix()
+        assert R.shape == (3, 3), "Should return a 3x3 matrix"
+
+    def test_is_valid_rotation_matrix(self):
+        """Test that the generated matrix is a valid rotation matrix."""
+        R = generate_random_rotation_matrix()
+        # Check orthogonality: R.T @ R should be identity
+        assert np.allclose(R.T @ R, np.eye(3), atol=1e-10), (
+            "Matrix should be orthogonal"
+        )
+        # Check determinant is +1
+        assert np.isclose(np.linalg.det(R), 1.0, atol=1e-10), "Determinant should be +1"
+
+    def test_multiple_generations_are_different(self):
+        """Test that multiple calls generate different matrices."""
+        R1 = generate_random_rotation_matrix()
+        R2 = generate_random_rotation_matrix()
+        R3 = generate_random_rotation_matrix()
+
+        # Very unlikely to generate identical matrices
+        assert not np.allclose(R1, R2, atol=1e-6), "Should generate different matrices"
+        assert not np.allclose(R2, R3, atol=1e-6), "Should generate different matrices"
+
+    def test_generated_matrices_pass_validation(self):
+        """Test that generated matrices pass is_rotation_matrix validation."""
+        for _ in range(10):
+            R = generate_random_rotation_matrix()
+            assert is_rotation_matrix(R), (
+                "Generated matrix should pass is_rotation_matrix validation"
+            )
+
+    def test_uniform_sampling_coverage(self):
+        """Test that the function generates diverse rotations."""
+        # Generate multiple random rotations and check they span SO(3)
+        rotations = [generate_random_rotation_matrix() for _ in range(20)]
+
+        # Check that determinants are all +1
+        dets = [np.linalg.det(R) for R in rotations]
+        assert all(np.isclose(d, 1.0, atol=1e-10) for d in dets), (
+            "All determinants should be +1"
+        )
+
+        # Check diversity: compute pairwise rotation errors
+        errors = []
+        for i in range(len(rotations) - 1):
+            error = rotation_error_angle(rotations[i], rotations[i + 1])
+            errors.append(error)
+
+        # At least some rotations should have significant angular difference
+        assert any(error > 0.1 for error in errors), (
+            "Should generate diverse rotations with significant angular differences"
+        )
+
+    def test_preserves_vector_norms(self):
+        """Test that rotation preserves vector norms."""
+        R = generate_random_rotation_matrix()
+        v = np.array([1.0, 2.0, 3.0])
+        v_rotated = R @ v
+
+        assert np.isclose(np.linalg.norm(v), np.linalg.norm(v_rotated)), (
+            "Rotation should preserve vector norms"
+        )
+
+    def test_composition_is_valid_rotation(self):
+        """Test that composition of generated rotations is also a valid rotation."""
+        R1 = generate_random_rotation_matrix()
+        R2 = generate_random_rotation_matrix()
+        R_composed = R1 @ R2
+
+        assert is_rotation_matrix(R_composed), (
+            "Composition of rotations should be a valid rotation"
+        )
+
+    def test_all_determinants_positive(self):
+        """Test that all generated matrices have determinant +1."""
+        # Generate many matrices to increase chance of hitting both code paths
+        for _ in range(50):
+            R = generate_random_rotation_matrix()
+            det = np.linalg.det(R)
+            assert np.isclose(det, 1.0, atol=1e-10), (
+                f"Determinant should be +1, got {det}"
+            )
+            assert det > 0, "Determinant should be positive"
+
+
+class TestIsRotationMatrix:
+    """Tests for is_rotation_matrix function."""
+
+    def test_identity_is_valid(self):
+        """Test that identity matrix is recognized as a valid rotation."""
+        R = np.eye(3)
+        assert is_rotation_matrix(R), "Identity should be a valid rotation matrix"
+
+    def test_valid_90_degree_rotation(self):
+        """Test that a valid 90-degree rotation is recognized."""
+        R = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+        assert is_rotation_matrix(R), "90-degree rotation should be valid"
+
+    def test_valid_arbitrary_rotation(self):
+        """Test that an arbitrary valid rotation is recognized."""
+        # 45-degree rotation around z-axis
+        theta = np.pi / 4
+        R = np.array(
+            [
+                [np.cos(theta), -np.sin(theta), 0],
+                [np.sin(theta), np.cos(theta), 0],
+                [0, 0, 1],
+            ]
+        )
+        assert is_rotation_matrix(R), "Arbitrary rotation should be valid"
+
+    def test_non_orthogonal_matrix_rejected(self):
+        """Test that non-orthogonal matrices are rejected."""
+        # Random non-orthogonal matrix
+        R = np.array([[1, 2, 0], [0, 1, 0], [0, 0, 1]])
+        assert not is_rotation_matrix(R), "Non-orthogonal matrix should be rejected"
+
+    def test_negative_determinant_rejected(self):
+        """Test that matrices with determinant -1 are rejected (reflections)."""
+        # This is a reflection, not a rotation
+        R = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        assert not is_rotation_matrix(R), "Reflection (det = -1) should be rejected"
+
+    def test_scaled_matrix_rejected(self):
+        """Test that scaled orthogonal matrices are rejected."""
+        # Scaled identity matrix
+        R = 2.0 * np.eye(3)
+        assert not is_rotation_matrix(R), "Scaled matrix should be rejected"
+
+    def test_random_matrix_rejected(self):
+        """Test that random non-rotation matrices are rejected."""
+        np.random.seed(42)
+        R = np.random.randn(3, 3)
+        assert not is_rotation_matrix(R), "Random matrix should be rejected"
+
+    def test_near_rotation_with_numerical_error(self):
+        """Test handling of matrices with small numerical errors."""
+        # Create a rotation with tiny numerical error
+        R = np.eye(3)
+        R[0, 0] = 1.0 + 1e-10  # Very small deviation
+
+        # Should still pass due to tolerance in np.allclose
+        result = is_rotation_matrix(R)
+        assert result, "Matrix with tiny numerical error should pass"
+
+    def test_singular_matrix_rejected(self):
+        """Test that singular matrices are rejected."""
+        # Singular matrix (determinant = 0)
+        R = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0]])
+        assert not is_rotation_matrix(R), "Singular matrix should be rejected"
+
+    def test_skew_symmetric_rejected(self):
+        """Test that skew-symmetric matrices are rejected."""
+        # Skew-symmetric matrix (det = 0 for 3x3)
+        R = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 0]])
+        assert not is_rotation_matrix(R), "Skew-symmetric matrix should be rejected"
+
+    def test_parametrized_valid_rotations(self):
+        """Test multiple valid rotations around different axes."""
+        test_cases = [
+            # 90° around x-axis
+            np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]]),
+            # 90° around y-axis
+            np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]]),
+            # 90° around z-axis
+            np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]]),
+            # 180° around x-axis
+            np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]]),
+        ]
+
+        for i, R in enumerate(test_cases):
+            assert is_rotation_matrix(R), f"Test case {i} should be valid rotation"
+
+    def test_generated_random_rotations_are_valid(self):
+        """Test that all generated random rotations pass validation."""
+        for _ in range(20):
+            R = generate_random_rotation_matrix()
+            assert is_rotation_matrix(R), (
+                "All generated random rotations should be valid"
+            )
