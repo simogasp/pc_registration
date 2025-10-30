@@ -12,6 +12,7 @@ def draw_registration_result(
     target: o3d.geometry.PointCloud,
     transformation: np.ndarray,
     window_name: str,
+    size: float = 1,
 ) -> None:
     """Visualize the registration result by applying transformation to source.
 
@@ -24,6 +25,7 @@ def draw_registration_result(
         target: Target point cloud to be displayed.
         transformation: 4x4 transformation matrix to apply to the source.
         window_name: Name of the visualization window.
+        size: Size of the coordinate frame axes.
 
     Note:
         This function blocks execution until the visualization window is closed.
@@ -34,8 +36,11 @@ def draw_registration_result(
     source_temp.paint_uniform_color([1, 0.706, 0])  # yellow
     target_temp.paint_uniform_color([0, 0.651, 0.929])  # cyan
     source_temp.transform(transformation)
+    mesh_frame_target = o3d.geometry.TriangleMesh.create_coordinate_frame(
+        size=size, origin=[0, 0, 0]
+    )
     o3d.visualization.draw_geometries(  # type: ignore
-        [source_temp, target_temp], window_name=window_name
+        [source_temp, target_temp, mesh_frame_target], window_name=window_name
     )
 
 
@@ -58,7 +63,7 @@ def print_point_cloud_info(
     """
     num_points = len(pcd.points)
     aabb = pcd.get_axis_aligned_bounding_box()
-    obb = pcd.get_oriented_bounding_box()
+    obb = pcd.get_minimal_oriented_bounding_box()
     logging.info(f"Point Cloud '{name}':")
     logging.info(f"\tNumber of points: {num_points}")
     logging.info(f"\tHas normals: {pcd.has_normals()}")
