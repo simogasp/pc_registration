@@ -371,3 +371,39 @@ def perturb_rotation_matrix(rot_mat: np.ndarray, sigma: float) -> np.ndarray:
 
     dR = random_small_rotation(sigma)
     return dR @ rot_mat
+
+
+def rot_mat_x(angle: float) -> np.ndarray:
+    """Generate a rotation matrix for a rotation around the x-axis.
+
+    Args:
+        angle: Rotation angle in radians.
+
+    Returns:
+        A 3x3 rotation matrix representing the rotation around the x-axis.
+    """
+    return rotation_matrix_from_axis_angle(np.array([1.0, 0.0, 0.0]), angle)
+
+
+def rot_mat_y(angle: float) -> np.ndarray:
+    """Generate a rotation matrix for a rotation around the y-axis.
+
+    Args:
+        angle: Rotation angle in radians.
+
+    Returns:
+        A 3x3 rotation matrix representing the rotation around the y-axis.
+    """
+    return rotation_matrix_from_axis_angle(np.array([0.0, 1.0, 0.0]), angle)
+
+
+def rot_mat_z(angle: float) -> np.ndarray:
+    """Generate a rotation matrix for a rotation around the z-axis.
+
+    Args:
+        angle: Rotation angle in radians.
+
+    Returns:
+        A 3x3 rotation matrix representing the rotation around the z-axis.
+    """
+    return rotation_matrix_from_axis_angle(np.array([0.0, 0.0, 1.0]), angle)

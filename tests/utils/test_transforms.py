@@ -17,6 +17,9 @@ from registration.utils.transforms import (
     random_small_rotation,
     perturb_rotation_matrix,
     rototranslation_from_rotation_translation,
+    rot_mat_x,
+    rot_mat_y,
+    rot_mat_z,
 )
 
 
@@ -995,7 +998,9 @@ class TestRotationAligningTwoDirections:
             R = rotation_aligning_two_directions(s, t)
             result = R @ s
 
-            assert np.allclose(result, t, atol=1e-6), "Should align to opposite direction"
+            assert np.allclose(result, t, atol=1e-6), (
+                "Should align to opposite direction"
+            )
 
     def test_arbitrary_alignment(self):
         """Test alignment of arbitrary directions."""
@@ -1513,7 +1518,7 @@ class TestPerturbRotationMatrix:
         assert is_rotation_matrix(R_composed), (
             "Composition with perturbed rotation should be valid"
         )
-    
+
     def test_wrong_input_raises_error(self):
         """Test that non-rotation matrix input raises ValueError."""
         R_invalid = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 2]])  # Not a rotation
@@ -1521,3 +1526,687 @@ class TestPerturbRotationMatrix:
         with pytest.raises(ValueError, match="valid rotation matrix"):
             perturb_rotation_matrix(R_invalid, 0.1)
 
+
+class TestRotMatX:
+    """Tests for rot_mat_x function."""
+
+    def test_returns_3x3_matrix(self):
+        """Test that output is always a 3x3 matrix."""
+        angle = np.pi / 4
+        R = rot_mat_x(angle)
+
+        assert R.shape == (3, 3), "Output should be 3x3 matrix"
+
+    def test_zero_angle_gives_identity(self):
+        """Test that zero angle returns identity matrix."""
+        R = rot_mat_x(0.0)
+
+        assert np.allclose(R, np.eye(3)), "Zero angle should give identity"
+
+    def test_is_valid_rotation_matrix(self):
+        """Test that result is a valid rotation matrix."""
+        angles = [0, np.pi / 6, np.pi / 4, np.pi / 2, np.pi, -np.pi / 3]
+
+        for angle in angles:
+            R = rot_mat_x(angle)
+            assert is_rotation_matrix(R), f"Should be valid rotation for angle {angle}"
+
+    def test_90_degree_rotation(self):
+        """Test 90-degree rotation around x-axis."""
+        R = rot_mat_x(np.pi / 2)
+
+        # Expected matrix for 90° rotation around x-axis
+        # [1,  0,  0]
+        # [0,  0, -1]
+        # [0,  1,  0]
+        expected = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
+
+        assert np.allclose(R, expected, atol=1e-10), (
+            "90° rotation should match expected"
+        )
+
+    def test_180_degree_rotation(self):
+        """Test 180-degree rotation around x-axis."""
+        R = rot_mat_x(np.pi)
+
+        # Expected matrix for 180° rotation around x-axis
+        # [1,  0,  0]
+        # [0, -1,  0]
+        # [0,  0, -1]
+        expected = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+
+        assert np.allclose(R, expected, atol=1e-10), (
+            "180° rotation should match expected"
+        )
+
+    def test_x_axis_invariant(self):
+        """Test that x-axis remains unchanged."""
+        angle = np.pi / 3
+        R = rot_mat_x(angle)
+
+        x_axis = np.array([1.0, 0.0, 0.0])
+        rotated = R @ x_axis
+
+        assert np.allclose(rotated, x_axis), "X-axis should remain invariant"
+
+    def test_rotates_y_axis_to_z_plane(self):
+        """Test that y-axis rotates in y-z plane."""
+        R = rot_mat_x(np.pi / 2)
+
+        y_axis = np.array([0.0, 1.0, 0.0])
+        rotated = R @ y_axis
+
+        # After 90° rotation around x, y should go to z
+        expected = np.array([0.0, 0.0, 1.0])
+        assert np.allclose(rotated, expected, atol=1e-10), "Y should rotate to Z"
+
+    def test_rotates_z_axis_to_neg_y_plane(self):
+        """Test that z-axis rotates in y-z plane."""
+        R = rot_mat_x(np.pi / 2)
+
+        z_axis = np.array([0.0, 0.0, 1.0])
+        rotated = R @ z_axis
+
+        # After 90° rotation around x, z should go to -y
+        expected = np.array([0.0, -1.0, 0.0])
+        assert np.allclose(rotated, expected, atol=1e-10), "Z should rotate to -Y"
+
+    def test_negative_angle(self):
+        """Test rotation with negative angle."""
+        angle = -np.pi / 4
+        R = rot_mat_x(angle)
+
+        assert is_rotation_matrix(R), "Negative angle should produce valid rotation"
+
+        # Negative angle should be opposite direction
+        R_pos = rot_mat_x(-angle)
+        # R_neg @ R_pos should be identity
+        assert np.allclose(R @ R_pos, np.eye(3), atol=1e-10), (
+            "Opposite angles should be inverse rotations"
+        )
+
+    def test_full_rotation_gives_identity(self):
+        """Test that 2π rotation returns to identity."""
+        R = rot_mat_x(2 * np.pi)
+
+        assert np.allclose(R, np.eye(3), atol=1e-10), "Full rotation should be identity"
+
+    def test_composition_property(self):
+        """Test that sequential rotations compose correctly."""
+        angle1 = np.pi / 6
+        angle2 = np.pi / 3
+
+        R1 = rot_mat_x(angle1)
+        R2 = rot_mat_x(angle2)
+        R_composed = R2 @ R1
+
+        # Should equal single rotation of sum
+        R_sum = rot_mat_x(angle1 + angle2)
+
+        assert np.allclose(R_composed, R_sum, atol=1e-10), (
+            "Composition should equal sum of angles"
+        )
+
+    def test_preserves_vector_norms(self):
+        """Test that rotation preserves vector lengths."""
+        angle = np.pi / 5
+        R = rot_mat_x(angle)
+
+        # Test with random vectors
+        for _ in range(10):
+            v = np.random.randn(3)
+            v_rotated = R @ v
+
+            assert np.isclose(np.linalg.norm(v), np.linalg.norm(v_rotated)), (
+                "Rotation should preserve vector norm"
+            )
+
+    def test_orthogonality(self):
+        """Test that matrix is orthogonal (R.T @ R = I)."""
+        angle = np.pi / 7
+        R = rot_mat_x(angle)
+
+        assert np.allclose(R.T @ R, np.eye(3), atol=1e-10), (
+            "Matrix should be orthogonal"
+        )
+        assert np.allclose(R @ R.T, np.eye(3), atol=1e-10), (
+            "Matrix should be orthogonal"
+        )
+
+    def test_determinant_is_one(self):
+        """Test that determinant is +1."""
+        angles = [0, np.pi / 6, np.pi / 2, np.pi, -np.pi / 4]
+
+        for angle in angles:
+            R = rot_mat_x(angle)
+            det = np.linalg.det(R)
+            assert np.isclose(det, 1.0, atol=1e-10), (
+                f"Determinant should be 1 for angle {angle}"
+            )
+
+    def test_inverse_is_transpose(self):
+        """Test that inverse equals transpose for rotation matrices."""
+        angle = np.pi / 3
+        R = rot_mat_x(angle)
+
+        R_inv = np.linalg.inv(R)
+        assert np.allclose(R_inv, R.T, atol=1e-10), "Inverse should equal transpose"
+
+    def test_very_small_angle(self):
+        """Test with very small angle."""
+        angle = 1e-8
+        R = rot_mat_x(angle)
+
+        # Should be very close to identity
+        assert np.allclose(R, np.eye(3), atol=1e-6), (
+            "Small angle should be near identity"
+        )
+
+    def test_large_angle(self):
+        """Test with angle larger than 2π."""
+        angle = 5 * np.pi
+        R = rot_mat_x(angle)
+
+        # Should be equivalent to (5π mod 2π) = π
+        R_equiv = rot_mat_x(np.pi)
+        assert np.allclose(R, R_equiv, atol=1e-10), "Large angle should wrap around"
+
+
+class TestRotMatY:
+    """Tests for rot_mat_y function."""
+
+    def test_returns_3x3_matrix(self):
+        """Test that output is always a 3x3 matrix."""
+        angle = np.pi / 4
+        R = rot_mat_y(angle)
+
+        assert R.shape == (3, 3), "Output should be 3x3 matrix"
+
+    def test_zero_angle_gives_identity(self):
+        """Test that zero angle returns identity matrix."""
+        R = rot_mat_y(0.0)
+
+        assert np.allclose(R, np.eye(3)), "Zero angle should give identity"
+
+    def test_is_valid_rotation_matrix(self):
+        """Test that result is a valid rotation matrix."""
+        angles = [0, np.pi / 6, np.pi / 4, np.pi / 2, np.pi, -np.pi / 3]
+
+        for angle in angles:
+            R = rot_mat_y(angle)
+            assert is_rotation_matrix(R), f"Should be valid rotation for angle {angle}"
+
+    def test_90_degree_rotation(self):
+        """Test 90-degree rotation around y-axis."""
+        R = rot_mat_y(np.pi / 2)
+
+        # Expected matrix for 90° rotation around y-axis
+        # [ 0,  0,  1]
+        # [ 0,  1,  0]
+        # [-1,  0,  0]
+        expected = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
+
+        assert np.allclose(R, expected, atol=1e-10), (
+            "90° rotation should match expected"
+        )
+
+    def test_180_degree_rotation(self):
+        """Test 180-degree rotation around y-axis."""
+        R = rot_mat_y(np.pi)
+
+        # Expected matrix for 180° rotation around y-axis
+        # [-1,  0,  0]
+        # [ 0,  1,  0]
+        # [ 0,  0, -1]
+        expected = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+
+        assert np.allclose(R, expected, atol=1e-10), (
+            "180° rotation should match expected"
+        )
+
+    def test_y_axis_invariant(self):
+        """Test that y-axis remains unchanged."""
+        angle = np.pi / 3
+        R = rot_mat_y(angle)
+
+        y_axis = np.array([0.0, 1.0, 0.0])
+        rotated = R @ y_axis
+
+        assert np.allclose(rotated, y_axis), "Y-axis should remain invariant"
+
+    def test_rotates_z_axis_to_x_plane(self):
+        """Test that z-axis rotates in x-z plane."""
+        R = rot_mat_y(np.pi / 2)
+
+        z_axis = np.array([0.0, 0.0, 1.0])
+        rotated = R @ z_axis
+
+        # After 90° rotation around y, z should go to x
+        expected = np.array([1.0, 0.0, 0.0])
+        assert np.allclose(rotated, expected, atol=1e-10), "Z should rotate to X"
+
+    def test_rotates_x_axis_to_neg_z_plane(self):
+        """Test that x-axis rotates in x-z plane."""
+        R = rot_mat_y(np.pi / 2)
+
+        x_axis = np.array([1.0, 0.0, 0.0])
+        rotated = R @ x_axis
+
+        # After 90° rotation around y, x should go to -z
+        expected = np.array([0.0, 0.0, -1.0])
+        assert np.allclose(rotated, expected, atol=1e-10), "X should rotate to -Z"
+
+    def test_negative_angle(self):
+        """Test rotation with negative angle."""
+        angle = -np.pi / 4
+        R = rot_mat_y(angle)
+
+        assert is_rotation_matrix(R), "Negative angle should produce valid rotation"
+
+        # Negative angle should be opposite direction
+        R_pos = rot_mat_y(-angle)
+        assert np.allclose(R @ R_pos, np.eye(3), atol=1e-10), (
+            "Opposite angles should be inverse rotations"
+        )
+
+    def test_full_rotation_gives_identity(self):
+        """Test that 2π rotation returns to identity."""
+        R = rot_mat_y(2 * np.pi)
+
+        assert np.allclose(R, np.eye(3), atol=1e-10), "Full rotation should be identity"
+
+    def test_composition_property(self):
+        """Test that sequential rotations compose correctly."""
+        angle1 = np.pi / 6
+        angle2 = np.pi / 3
+
+        R1 = rot_mat_y(angle1)
+        R2 = rot_mat_y(angle2)
+        R_composed = R2 @ R1
+
+        # Should equal single rotation of sum
+        R_sum = rot_mat_y(angle1 + angle2)
+
+        assert np.allclose(R_composed, R_sum, atol=1e-10), (
+            "Composition should equal sum of angles"
+        )
+
+    def test_preserves_vector_norms(self):
+        """Test that rotation preserves vector lengths."""
+        angle = np.pi / 5
+        R = rot_mat_y(angle)
+
+        # Test with random vectors
+        for _ in range(10):
+            v = np.random.randn(3)
+            v_rotated = R @ v
+
+            assert np.isclose(np.linalg.norm(v), np.linalg.norm(v_rotated)), (
+                "Rotation should preserve vector norm"
+            )
+
+    def test_orthogonality(self):
+        """Test that matrix is orthogonal (R.T @ R = I)."""
+        angle = np.pi / 7
+        R = rot_mat_y(angle)
+
+        assert np.allclose(R.T @ R, np.eye(3), atol=1e-10), (
+            "Matrix should be orthogonal"
+        )
+        assert np.allclose(R @ R.T, np.eye(3), atol=1e-10), (
+            "Matrix should be orthogonal"
+        )
+
+    def test_determinant_is_one(self):
+        """Test that determinant is +1."""
+        angles = [0, np.pi / 6, np.pi / 2, np.pi, -np.pi / 4]
+
+        for angle in angles:
+            R = rot_mat_y(angle)
+            det = np.linalg.det(R)
+            assert np.isclose(det, 1.0, atol=1e-10), (
+                f"Determinant should be 1 for angle {angle}"
+            )
+
+    def test_inverse_is_transpose(self):
+        """Test that inverse equals transpose for rotation matrices."""
+        angle = np.pi / 3
+        R = rot_mat_y(angle)
+
+        R_inv = np.linalg.inv(R)
+        assert np.allclose(R_inv, R.T, atol=1e-10), "Inverse should equal transpose"
+
+    def test_very_small_angle(self):
+        """Test with very small angle."""
+        angle = 1e-8
+        R = rot_mat_y(angle)
+
+        # Should be very close to identity
+        assert np.allclose(R, np.eye(3), atol=1e-6), (
+            "Small angle should be near identity"
+        )
+
+    def test_large_angle(self):
+        """Test with angle larger than 2π."""
+        angle = 5 * np.pi
+        R = rot_mat_y(angle)
+
+        # Should be equivalent to (5π mod 2π) = π
+        R_equiv = rot_mat_y(np.pi)
+        assert np.allclose(R, R_equiv, atol=1e-10), "Large angle should wrap around"
+
+
+class TestRotMatZ:
+    """Tests for rot_mat_z function."""
+
+    def test_returns_3x3_matrix(self):
+        """Test that output is always a 3x3 matrix."""
+        angle = np.pi / 4
+        R = rot_mat_z(angle)
+
+        assert R.shape == (3, 3), "Output should be 3x3 matrix"
+
+    def test_zero_angle_gives_identity(self):
+        """Test that zero angle returns identity matrix."""
+        R = rot_mat_z(0.0)
+
+        assert np.allclose(R, np.eye(3)), "Zero angle should give identity"
+
+    def test_is_valid_rotation_matrix(self):
+        """Test that result is a valid rotation matrix."""
+        angles = [0, np.pi / 6, np.pi / 4, np.pi / 2, np.pi, -np.pi / 3]
+
+        for angle in angles:
+            R = rot_mat_z(angle)
+            assert is_rotation_matrix(R), f"Should be valid rotation for angle {angle}"
+
+    def test_90_degree_rotation(self):
+        """Test 90-degree rotation around z-axis."""
+        R = rot_mat_z(np.pi / 2)
+
+        # Expected matrix for 90° rotation around z-axis
+        # [ 0, -1,  0]
+        # [ 1,  0,  0]
+        # [ 0,  0,  1]
+        expected = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+
+        assert np.allclose(R, expected, atol=1e-10), (
+            "90° rotation should match expected"
+        )
+
+    def test_180_degree_rotation(self):
+        """Test 180-degree rotation around z-axis."""
+        R = rot_mat_z(np.pi)
+
+        # Expected matrix for 180° rotation around z-axis
+        # [-1,  0,  0]
+        # [ 0, -1,  0]
+        # [ 0,  0,  1]
+        expected = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+
+        assert np.allclose(R, expected, atol=1e-10), (
+            "180° rotation should match expected"
+        )
+
+    def test_z_axis_invariant(self):
+        """Test that z-axis remains unchanged."""
+        angle = np.pi / 3
+        R = rot_mat_z(angle)
+
+        z_axis = np.array([0.0, 0.0, 1.0])
+        rotated = R @ z_axis
+
+        assert np.allclose(rotated, z_axis), "Z-axis should remain invariant"
+
+    def test_rotates_x_axis_to_y_plane(self):
+        """Test that x-axis rotates in x-y plane."""
+        R = rot_mat_z(np.pi / 2)
+
+        x_axis = np.array([1.0, 0.0, 0.0])
+        rotated = R @ x_axis
+
+        # After 90° rotation around z, x should go to y
+        expected = np.array([0.0, 1.0, 0.0])
+        assert np.allclose(rotated, expected, atol=1e-10), "X should rotate to Y"
+
+    def test_rotates_y_axis_to_neg_x_plane(self):
+        """Test that y-axis rotates in x-y plane."""
+        R = rot_mat_z(np.pi / 2)
+
+        y_axis = np.array([0.0, 1.0, 0.0])
+        rotated = R @ y_axis
+
+        # After 90° rotation around z, y should go to -x
+        expected = np.array([-1.0, 0.0, 0.0])
+        assert np.allclose(rotated, expected, atol=1e-10), "Y should rotate to -X"
+
+    def test_negative_angle(self):
+        """Test rotation with negative angle."""
+        angle = -np.pi / 4
+        R = rot_mat_z(angle)
+
+        assert is_rotation_matrix(R), "Negative angle should produce valid rotation"
+
+        # Negative angle should be opposite direction
+        R_pos = rot_mat_z(-angle)
+        assert np.allclose(R @ R_pos, np.eye(3), atol=1e-10), (
+            "Opposite angles should be inverse rotations"
+        )
+
+    def test_full_rotation_gives_identity(self):
+        """Test that 2π rotation returns to identity."""
+        R = rot_mat_z(2 * np.pi)
+
+        assert np.allclose(R, np.eye(3), atol=1e-10), "Full rotation should be identity"
+
+    def test_composition_property(self):
+        """Test that sequential rotations compose correctly."""
+        angle1 = np.pi / 6
+        angle2 = np.pi / 3
+
+        R1 = rot_mat_z(angle1)
+        R2 = rot_mat_z(angle2)
+        R_composed = R2 @ R1
+
+        # Should equal single rotation of sum
+        R_sum = rot_mat_z(angle1 + angle2)
+
+        assert np.allclose(R_composed, R_sum, atol=1e-10), (
+            "Composition should equal sum of angles"
+        )
+
+    def test_preserves_vector_norms(self):
+        """Test that rotation preserves vector lengths."""
+        angle = np.pi / 5
+        R = rot_mat_z(angle)
+
+        # Test with random vectors
+        for _ in range(10):
+            v = np.random.randn(3)
+            v_rotated = R @ v
+
+            assert np.isclose(np.linalg.norm(v), np.linalg.norm(v_rotated)), (
+                "Rotation should preserve vector norm"
+            )
+
+    def test_orthogonality(self):
+        """Test that matrix is orthogonal (R.T @ R = I)."""
+        angle = np.pi / 7
+        R = rot_mat_z(angle)
+
+        assert np.allclose(R.T @ R, np.eye(3), atol=1e-10), (
+            "Matrix should be orthogonal"
+        )
+        assert np.allclose(R @ R.T, np.eye(3), atol=1e-10), (
+            "Matrix should be orthogonal"
+        )
+
+    def test_determinant_is_one(self):
+        """Test that determinant is +1."""
+        angles = [0, np.pi / 6, np.pi / 2, np.pi, -np.pi / 4]
+
+        for angle in angles:
+            R = rot_mat_z(angle)
+            det = np.linalg.det(R)
+            assert np.isclose(det, 1.0, atol=1e-10), (
+                f"Determinant should be 1 for angle {angle}"
+            )
+
+    def test_inverse_is_transpose(self):
+        """Test that inverse equals transpose for rotation matrices."""
+        angle = np.pi / 3
+        R = rot_mat_z(angle)
+
+        R_inv = np.linalg.inv(R)
+        assert np.allclose(R_inv, R.T, atol=1e-10), "Inverse should equal transpose"
+
+    def test_very_small_angle(self):
+        """Test with very small angle."""
+        angle = 1e-8
+        R = rot_mat_z(angle)
+
+        # Should be very close to identity
+        assert np.allclose(R, np.eye(3), atol=1e-6), (
+            "Small angle should be near identity"
+        )
+
+    def test_large_angle(self):
+        """Test with angle larger than 2π."""
+        angle = 5 * np.pi
+        R = rot_mat_z(angle)
+
+        # Should be equivalent to (5π mod 2π) = π
+        R_equiv = rot_mat_z(np.pi)
+        assert np.allclose(R, R_equiv, atol=1e-10), "Large angle should wrap around"
+
+
+class TestAxisRotationsInteraction:
+    """Tests for interactions between axis rotation functions."""
+
+    def test_all_axes_commute_with_themselves(self):
+        """Test that rotations around same axis commute."""
+        angle1, angle2 = np.pi / 6, np.pi / 4
+
+        # X-axis
+        Rx1 = rot_mat_x(angle1)
+        Rx2 = rot_mat_x(angle2)
+        assert np.allclose(Rx1 @ Rx2, Rx2 @ Rx1, atol=1e-10), (
+            "X rotations should commute"
+        )
+
+        # Y-axis
+        Ry1 = rot_mat_y(angle1)
+        Ry2 = rot_mat_y(angle2)
+        assert np.allclose(Ry1 @ Ry2, Ry2 @ Ry1, atol=1e-10), (
+            "Y rotations should commute"
+        )
+
+        # Z-axis
+        Rz1 = rot_mat_z(angle1)
+        Rz2 = rot_mat_z(angle2)
+        assert np.allclose(Rz1 @ Rz2, Rz2 @ Rz1, atol=1e-10), (
+            "Z rotations should commute"
+        )
+
+    def test_different_axes_do_not_commute(self):
+        """Test that rotations around different axes don't commute."""
+        angle = np.pi / 4
+
+        Rx = rot_mat_x(angle)
+        Ry = rot_mat_y(angle)
+        Rz = rot_mat_z(angle)
+
+        # X and Y don't commute
+        assert not np.allclose(Rx @ Ry, Ry @ Rx, atol=1e-10), (
+            "X and Y shouldn't commute"
+        )
+
+        # X and Z don't commute
+        assert not np.allclose(Rx @ Rz, Rz @ Rx, atol=1e-10), (
+            "X and Z shouldn't commute"
+        )
+
+        # Y and Z don't commute
+        assert not np.allclose(Ry @ Rz, Rz @ Ry, atol=1e-10), (
+            "Y and Z shouldn't commute"
+        )
+
+    def test_euler_angle_composition(self):
+        """Test that Euler angle composition produces valid rotation."""
+        alpha, beta, gamma = np.pi / 6, np.pi / 4, np.pi / 3
+
+        # ZYX Euler angles
+        R = rot_mat_z(alpha) @ rot_mat_y(beta) @ rot_mat_x(gamma)
+
+        assert is_rotation_matrix(R), "Euler composition should be valid rotation"
+
+    def test_inverse_via_negative_angle(self):
+        """Test that negative angle gives inverse rotation."""
+        angle = np.pi / 5
+
+        Rx = rot_mat_x(angle)
+        Rx_inv = rot_mat_x(-angle)
+        assert np.allclose(Rx @ Rx_inv, np.eye(3), atol=1e-10), (
+            "X inverse via negative angle"
+        )
+
+        Ry = rot_mat_y(angle)
+        Ry_inv = rot_mat_y(-angle)
+        assert np.allclose(Ry @ Ry_inv, np.eye(3), atol=1e-10), (
+            "Y inverse via negative angle"
+        )
+
+        Rz = rot_mat_z(angle)
+        Rz_inv = rot_mat_z(-angle)
+        assert np.allclose(Rz @ Rz_inv, np.eye(3), atol=1e-10), (
+            "Z inverse via negative angle"
+        )
+
+    def test_gimbal_lock_representation(self):
+        """Test behavior near gimbal lock (90° rotation around Y)."""
+        # Gimbal lock occurs when middle angle is ±90°
+        Ry_gimbal = rot_mat_y(np.pi / 2)
+
+        # This should still produce valid rotation
+        assert is_rotation_matrix(Ry_gimbal), "Gimbal lock angle should be valid"
+
+    def test_rotation_sequence_xyz(self):
+        """Test XYZ rotation sequence."""
+        angles = [np.pi / 6, np.pi / 4, np.pi / 3]
+
+        R = rot_mat_x(angles[0]) @ rot_mat_y(angles[1]) @ rot_mat_z(angles[2])
+
+        assert is_rotation_matrix(R), "XYZ sequence should be valid"
+
+    def test_rotation_sequence_zyx(self):
+        """Test ZYX rotation sequence (common in aerospace)."""
+        angles = [np.pi / 6, np.pi / 4, np.pi / 3]
+
+        R = rot_mat_z(angles[0]) @ rot_mat_y(angles[1]) @ rot_mat_x(angles[2])
+
+        assert is_rotation_matrix(R), "ZYX sequence should be valid"
+
+    def test_consistency_with_general_rotation(self):
+        """Test that axis rotations match general rotation_matrix_from_axis_angle."""
+        angle = np.pi / 5
+
+        # X-axis
+        Rx_specific = rot_mat_x(angle)
+        Rx_general = rotation_matrix_from_axis_angle(np.array([1.0, 0.0, 0.0]), angle)
+        assert np.allclose(Rx_specific, Rx_general, atol=1e-10), (
+            "X rotation should match general"
+        )
+
+        # Y-axis
+        Ry_specific = rot_mat_y(angle)
+        Ry_general = rotation_matrix_from_axis_angle(np.array([0.0, 1.0, 0.0]), angle)
+        assert np.allclose(Ry_specific, Ry_general, atol=1e-10), (
+            "Y rotation should match general"
+        )
+
+        # Z-axis
+        Rz_specific = rot_mat_z(angle)
+        Rz_general = rotation_matrix_from_axis_angle(np.array([0.0, 0.0, 1.0]), angle)
+        assert np.allclose(Rz_specific, Rz_general, atol=1e-10), (
+            "Z rotation should match general"
+        )
