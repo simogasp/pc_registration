@@ -32,7 +32,7 @@ def rototranslation_from_rotation_translation(
 
 
 def axis_angle_from_rotation(rot_mat: np.ndarray) -> Tuple[np.ndarray, float]:
-    """Convert a rotation matrix to axis-angle representation.
+    r"""Convert a rotation matrix to axis-angle representation.
 
     Extracts the rotation axis and angle from a 3x3 rotation matrix using
     the Rodrigues formula. Handles special cases including identity rotation
@@ -48,9 +48,22 @@ def axis_angle_from_rotation(rot_mat: np.ndarray) -> Tuple[np.ndarray, float]:
             - angle: Rotation angle in radians, in the range [0, π].
 
     Note:
-        For very small rotations (angle ≈ 0), the axis is set to [1, 0, 0]
-        by convention. For 180° rotations, the axis is extracted from the
-        diagonal elements of the rotation matrix.
+        The rotation angle is extracted using:
+
+        .. math::
+
+            \theta = \arccos\left(\frac{\text{trace}(R) - 1}{2}\right)
+
+        For small rotations (:math:`\theta \approx 0`), the axis is set to [1, 0, 0]
+        by convention.
+
+        For 180° rotations (:math:`\theta = \pi`), the axis is extracted from:
+
+        .. math::
+
+            k_i = \sqrt{\frac{R_{ii} + 1}{2}}
+
+        where :math:`i \in \{x, y, z\}` and :math:`R_{ii}` are the diagonal elements.
     """
     eps = 1e-12
     angle = np.arccos(np.clip((np.trace(rot_mat) - 1) / 2.0, -1.0, 1.0))
@@ -77,16 +90,30 @@ def axis_angle_from_rotation(rot_mat: np.ndarray) -> Tuple[np.ndarray, float]:
 
 
 def cross_matrix(v: np.ndarray) -> np.ndarray:
-    """Create a cross-product matrix from a 3D vector.
+    r"""Create a cross-product matrix from a 3D vector.
 
     Args:
         v: A 3D vector (shape (3,)).
 
     Returns:
-        A 3x3 skew-symmetric matrix such that cross_matrix(v) @ w = v x w.
+        A 3x3 skew-symmetric matrix :math:`[v]_\times` such that
+        :math:`[v]_\times w = v \times w` for any vector :math:`w`.
 
     Raises:
-        ValueError: If the input axis is not a 3D vector.
+        ValueError: If the input vector is not 3D.
+
+    Note:
+        The cross-product matrix is defined as:
+
+        .. math::
+
+            [v]_\times = \begin{bmatrix}
+                0 & -v_z & v_y \\
+                v_z & 0 & -v_x \\
+                -v_y & v_x & 0
+            \end{bmatrix}
+
+        This matrix satisfies :math:`[v]_\times^T = -[v]_\times` (skew-symmetry).
     """
     if v.shape != (3,):
         raise ValueError("Input vector must be a 3D vector.")
@@ -95,9 +122,13 @@ def cross_matrix(v: np.ndarray) -> np.ndarray:
 
 
 def rotation_matrix_from_axis_angle(axis: np.ndarray, angle: float) -> np.ndarray:
-    """Generate a rotation matrix from an axis-angle representation.
+    r"""Generate a rotation matrix from an axis-angle representation.
+
+    Uses Rodrigues' rotation formula to compute the rotation matrix.
+    The input axis is automatically normalized to a unit vector.
+
     Args:
-        axis: A 3D unit vector representing the rotation axis.
+        axis: A 3D vector representing the rotation axis (will be normalized).
         angle: Rotation angle in radians.
 
     Returns:
@@ -105,6 +136,28 @@ def rotation_matrix_from_axis_angle(axis: np.ndarray, angle: float) -> np.ndarra
 
     Raises:
         ValueError: If the input axis is not a 3D vector.
+
+    Note:
+        The rotation matrix is computed using Rodrigues' formula:
+
+        .. math::
+
+            R = \cos(\theta) I + \sin(\theta) [k]_\times + (1 - \cos(\theta)) k k^T
+
+        where :math:`\theta` is the angle, :math:`k` is the unit rotation axis,
+        :math:`I` is the 3x3 identity matrix, :math:`[k]_\times` is the
+        skew-symmetric cross-product matrix, and :math:`k k^T` is the outer
+        product of the axis with itself.
+
+        The skew-symmetric matrix :math:`[k]_\times` is defined as:
+
+        .. math::
+
+            [k]_\times = \begin{bmatrix}
+                0 & -k_z & k_y \\
+                k_z & 0 & -k_x \\
+                -k_y & k_x & 0
+            \end{bmatrix}
     """
     if axis.shape != (3,):
         raise ValueError("Input vector must be a 3D vector.")
@@ -119,7 +172,7 @@ def rotation_matrix_from_axis_angle(axis: np.ndarray, angle: float) -> np.ndarra
 
 
 def rotation_error_angle(rot_est: np.ndarray, rot_gt: np.ndarray) -> float:
-    """Calculate the angular error between two rotation matrices.
+    r"""Calculate the angular error between two rotation matrices.
 
     Computes the angle (in radians) of the relative rotation between an
     estimated rotation matrix and a ground truth rotation matrix. This is
@@ -133,7 +186,12 @@ def rotation_error_angle(rot_est: np.ndarray, rot_gt: np.ndarray) -> float:
         The rotation error angle in radians, in the range [0, π].
 
     Note:
-        The error is computed as arccos((trace(R_est @ R_gt^T) - 1) / 2),
+        The error is computed using the formula:
+
+        .. math::
+
+            \theta = \arccos\left(\frac{\text{trace}(R_{\text{est}} R_{\text{gt}}^T) - 1}{2}\right)
+
         which gives the geodesic distance on SO(3).
     """
     rot_err = rot_est @ rot_gt.T
@@ -145,11 +203,9 @@ def rotation_error_angle(rot_est: np.ndarray, rot_gt: np.ndarray) -> float:
 def translation_error(
     rot_est: np.ndarray, t_est: np.ndarray, rot_gt: np.ndarray, t_gt: np.ndarray
 ) -> Tuple[float, npt.NDArray[np.floating]]:
-    """Calculate the translation error between two transformations.
+    r"""Calculate the translation error between two transformations.
 
     Computes the translation error accounting for the rotation difference.
-    The error is calculated as t_est - R_err @ t_gt, where R_err is the
-    relative rotation between estimated and ground truth rotations.
 
     Args:
         rot_est: Estimated 3x3 rotation matrix.
@@ -163,9 +219,14 @@ def translation_error(
             - vector: The 3D translation error vector.
 
     Note:
-        This function correctly accounts for the rotation difference when
-        computing translation error, ensuring the error is measured in the
-        same reference frame.
+        The translation error is computed as:
+
+        .. math::
+
+            t_{\text{err}} = t_{\text{est}} - R_{\text{err}} \, t_{\text{gt}}
+
+        where :math:`R_{\text{err}} = R_{\text{est}} R_{\text{gt}}^T` is the relative rotation.
+        This ensures the error is measured in the same reference frame.
     """
     rot_err = rot_est @ rot_gt.T
     t_err = t_est - rot_err @ t_gt
@@ -174,7 +235,7 @@ def translation_error(
 
 
 def transformation_error(t_est: np.ndarray, t_gt: np.ndarray) -> Tuple[float, float]:
-    """Calculate both rotation and translation errors between two transformations.
+    r"""Calculate both rotation and translation errors between two transformations.
 
     Decomposes two 4x4 transformation matrices into rotation and translation
     components, then computes the angular error between rotations and the
@@ -194,9 +255,15 @@ def transformation_error(t_est: np.ndarray, t_gt: np.ndarray) -> Tuple[float, fl
 
     Note:
         The transformation matrices should be in the standard form:
-        T = [[R, t],
-             [0, 1]]
-        where R is a 3x3 rotation matrix and t is a 3D translation vector.
+
+        .. math::
+
+            T = \begin{bmatrix}
+                R & t \\
+                0 & 1
+            \end{bmatrix}
+
+        where :math:`R` is a 3×3 rotation matrix and :math:`t` is a 3D translation vector.
     """
     # check the matrices are 4x4
     if t_est.shape != (4, 4) or t_gt.shape != (4, 4):
