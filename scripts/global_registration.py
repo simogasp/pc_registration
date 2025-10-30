@@ -18,6 +18,43 @@ from registration.visualization.viewer import (
 logger = logging.getLogger(__name__)
 
 
+def rough_scale_point_cloud(pcd: o3d.geometry.PointCloud) -> float:
+    """Estimate a rough scale of the point cloud based on its oriented bounding box.
+
+    This function computes the oriented bounding box (OBB) of the input point cloud
+    and returns a scale factor that is a power of ten closest to the maximum extent
+    of the OBB. This scale can be useful for setting parameters in visualization
+    or processing algorithms that depend on the size of the point cloud.
+    Args:
+        pcd: The input point cloud to analyze.
+    Returns:
+        A scale factor that is a power of ten closest to the maximum extent of the OBB.
+    """
+    obb = pcd.get_minimal_oriented_bounding_box()
+    max_extent = max(obb.extent)
+    # return the closest power of ten
+    return 10 ** np.floor(np.log10(max_extent))
+
+
+def rough_scale_point_cloud_from_file(pcd_filename: str) -> float:
+    """Estimate a rough scale of the point cloud based on its oriented bounding box.
+
+    This function loads a point cloud from the specified file, computes its
+    oriented bounding box (OBB), and returns a scale factor that is a power of ten
+    closest to the maximum extent of the OBB. This scale can be useful for setting
+    parameters in visualization or processing algorithms that depend on the size
+    of the point cloud.
+
+    Args:
+        pcd_filename: The file path to the point cloud to analyze.
+
+    Returns:
+        A scale factor that is a power of ten closest to the maximum extent of the OBB.
+    """
+    pcd = o3d.io.read_point_cloud(pcd_filename)
+    return rough_scale_point_cloud(pcd)
+
+
 def preprocess_point_cloud(pcd, voxel_size: float) -> tuple:
     """Preprocess a point cloud by downsampling and computing features.
 
@@ -89,7 +126,10 @@ def prepare_dataset(
     #                          [0.0, 0.0, 0.0, 1.0]])
 
     source.transform(trans_init)
-    draw_registration_result(source, target, np.identity(4), "Initial settings")
+    frame_size = rough_scale_point_cloud(source)
+    draw_registration_result(
+        source, target, np.identity(4), "Initial settings", size=frame_size
+    )
 
     logger.info("Preprocessing source point cloud")
     source_down, source_fpfh = preprocess_point_cloud(source, voxel_size)
@@ -204,12 +244,13 @@ def main(args: argparse.Namespace):
             - max_iter_icp: Maximum iterations for ICP (currently unused)
     """
     voxel_size = args.voxel_size
+    frame_size = rough_scale_point_cloud_from_file(args.source)
 
     trans_init = np.asarray(
         [
-            [0.862, 0.011, -0.507, 0.05],
-            [-0.139, 0.967, -0.215, 0.07],
-            [0.487, 0.255, 0.835, -0.0004],
+            [0.862, 0.011, -0.507, 3.10005 * frame_size],
+            [-0.139, 0.967, -0.215, 3.51007 * frame_size],
+            [0.487, 0.255, 0.835, -0.4 * frame_size],
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
@@ -234,12 +275,14 @@ def main(args: argparse.Namespace):
         target_down,
         result_ransac.transformation,
         "RANSAC global registration on downsampled point clouds",
+        size=frame_size,
     )
     draw_registration_result(
         source,
         target,
         result_ransac.transformation,
         "RANSAC global registration on original point clouds",
+        size=frame_size,
     )
 
     result_icp = refine_registration(
@@ -251,7 +294,7 @@ def main(args: argparse.Namespace):
         f"Result fitness: {result_icp.fitness}, inlier RMSE: {result_icp.inlier_rmse}"
     )
     draw_registration_result(
-        source, target, result_icp.transformation, "ICP refinement"
+        source, target, result_icp.transformation, "ICP refinement", size=frame_size
     )
     logger.debug(f"init mat:\n{trans_init}")
     logger.debug(
