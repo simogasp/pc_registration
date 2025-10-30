@@ -50,6 +50,48 @@ def axis_angle_from_rotation(rot_mat: np.ndarray) -> Tuple[np.ndarray, float]:
     return axis, angle
 
 
+def cross_matrix(v: np.ndarray) -> np.ndarray:
+    """Create a cross-product matrix from a 3D vector.
+
+    Args:
+        v: A 3D vector (shape (3,)).
+
+    Returns:
+        A 3x3 skew-symmetric matrix such that cross_matrix(v) @ w = v x w.
+
+    Raises:
+        ValueError: If the input axis is not a 3D vector.
+    """
+    if v.shape != (3,):
+        raise ValueError("Input vector must be a 3D vector.")
+
+    return np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+
+
+def rotation_matrix_from_axis_angle(axis: np.ndarray, angle: float) -> np.ndarray:
+    """Generate a rotation matrix from an axis-angle representation.
+    Args:
+        axis: A 3D unit vector representing the rotation axis.
+        angle: Rotation angle in radians.
+
+    Returns:
+        A 3x3 rotation matrix corresponding to the given axis and angle.
+
+    Raises:
+        ValueError: If the input axis is not a 3D vector.
+    """
+    if axis.shape != (3,):
+        raise ValueError("Input vector must be a 3D vector.")
+
+    axis = axis / np.linalg.norm(axis)
+    rot = (
+        np.cos(angle) * np.eye(3)
+        + np.sin(angle) * cross_matrix(axis)
+        + (1 - np.cos(angle)) * np.outer(axis, axis)
+    )
+    return rot
+
+
 def rotation_error_angle(rot_est: np.ndarray, rot_gt: np.ndarray) -> float:
     """Calculate the angular error between two rotation matrices.
 
@@ -181,3 +223,34 @@ def is_rotation_matrix(mat: np.ndarray) -> bool:
     if not np.isclose(np.linalg.det(mat), 1):
         return False
     return True
+
+
+def rotation_aligning_two_directions(
+    src_dir: np.ndarray, tgt_dir: np.ndarray
+) -> np.ndarray:
+    """Find the rotation matrix that aligns two directions.
+
+    Args:
+        src_dir: Source direction vector (3,).
+        tgt_dir: Target direction vector (3,).
+
+    Returns:
+        A 3x3 rotation matrix that aligns src_dir to tgt_dir.
+    """
+    # check they are 3D vectors
+    if src_dir.shape != (3,) or tgt_dir.shape != (3,):
+        raise ValueError("Both source and target directions must be 3D vectors.")
+
+    # check they are not already aligned
+    if np.allclose(
+        src_dir / np.linalg.norm(src_dir), tgt_dir / np.linalg.norm(tgt_dir)
+    ):
+        return np.eye(3)
+
+    src_dir = src_dir / np.linalg.norm(src_dir)
+    tgt_dir = tgt_dir / np.linalg.norm(tgt_dir)
+    v = np.cross(src_dir, tgt_dir)
+    v = v / np.linalg.norm(v)
+    angle = np.arccos(np.dot(src_dir, tgt_dir))
+
+    return rotation_matrix_from_axis_angle(v, angle)
