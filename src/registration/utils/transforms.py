@@ -5,6 +5,32 @@ import numpy as np
 import numpy.typing as npt
 
 
+def rototranslation_from_rotation_translation(
+    rot: np.ndarray, trans: np.ndarray
+) -> np.ndarray:
+    """Combine rotation matrix and translation vector into a 4x4 transformation matrix.
+
+    Args:
+        rot: A 3x3 rotation matrix.
+        trans: A 3D translation vector. (shape (3,))
+
+    Returns:
+        A 4x4 transformation matrix combining rotation and translation.
+
+    Raises:
+        ValueError: If the rotation matrix is not 3x3 or the translation vector is not 3D.
+    """
+    if rot.shape != (3, 3):
+        raise ValueError("Rotation matrix must be 3x3.")
+    if trans.shape != (3,):
+        raise ValueError("Translation vector must be a 3D vector.")
+
+    T = np.eye(4)
+    T[:3, :3] = rot
+    T[:3, 3] = trans
+    return T
+
+
 def axis_angle_from_rotation(rot_mat: np.ndarray) -> Tuple[np.ndarray, float]:
     """Convert a rotation matrix to axis-angle representation.
 
@@ -235,7 +261,7 @@ def rotation_aligning_two_directions(
         tgt_dir: Target direction vector (3,).
 
     Returns:
-        A 3x3 rotation matrix that aligns src_dir to tgt_dir.
+        A 3x3 rotation matrix that aligns src_dir to tgt_dir, i.e., R @ src_dir = tgt_dir.
     """
     # Validate input dimensions
     if src_dir.shape != (3,) or tgt_dir.shape != (3,):
@@ -244,13 +270,13 @@ def rotation_aligning_two_directions(
     # Normalize once at the beginning
     src_normalized = src_dir / np.linalg.norm(src_dir)
     tgt_normalized = tgt_dir / np.linalg.norm(tgt_dir)
-    
+
     # Check if vectors are already aligned (dot product ≈ 1)
     dot_product = np.dot(src_normalized, tgt_normalized)
-    
+
     if np.isclose(dot_product, 1.0, atol=1e-10):
         return np.eye(3)
-    
+
     # Check if vectors are opposite (dot product ≈ -1)
     if np.isclose(dot_product, -1.0, atol=1e-10):
         # Find an arbitrary orthogonal axis for 180° rotation
@@ -325,7 +351,7 @@ def random_small_rotation(sigma):
     k = axis / theta  # unit axis
     k_mat = cross_matrix(k)
 
-    # Rodrigues' formula: exp([ω]×)
+    # Rodrigues' formula: exp([axis]x)
     rot = np.eye(3) + np.sin(theta) * k_mat + (1 - np.cos(theta)) * (k_mat @ k_mat)
     return rot
 
@@ -345,6 +371,6 @@ def perturb_rotation_matrix(rot_mat: np.ndarray, sigma: float) -> np.ndarray:
     """
     if not is_rotation_matrix(rot_mat):
         raise ValueError("Input matrix must be a valid rotation matrix.")
-    
+
     dR = random_small_rotation(sigma)
     return dR @ rot_mat
