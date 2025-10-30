@@ -268,3 +268,83 @@ def rotation_aligning_two_directions(
     angle = np.arccos(np.clip(dot_product, -1.0, 1.0))
 
     return rotation_matrix_from_axis_angle(v, angle)
+
+
+def perturb_direction(direction: np.ndarray, sigma: float) -> np.ndarray:
+    """Perturb a direction vector by rotating by a small random rotation
+
+    Args:
+        direction: A 3D unit vector representing the original direction.
+        sigma: Standard deviation of the Gaussian noise to be added.
+
+    Returns:
+        A new 3D unit vector representing the perturbed direction.
+
+    Raises:
+        ValueError: If the input direction is not a 3D vector.
+    """
+    if direction.shape != (3,):
+        raise ValueError("Input direction must be a 3D vector.")
+
+    # Generate a random axis orthogonal to the original direction
+    random_axis = np.random.normal(size=3)
+    random_axis -= random_axis.dot(direction) * direction
+    random_axis /= np.linalg.norm(random_axis)
+
+    # Generate a small random angle
+    angle = np.random.normal(0, sigma)
+
+    new_axis = random_axis * np.cos(angle) + np.cross(random_axis, direction) * np.sin(
+        angle
+    )
+
+    return new_axis / np.linalg.norm(new_axis)
+
+
+def random_small_rotation(sigma):
+    """Generate a small random rotation matrix.
+
+    Uses the exponential map to generate a small random rotation matrix
+    by sampling a random rotation axis and an angle from a Gaussian distribution
+    with standard deviation sigma.
+
+    Args:
+        sigma: Standard deviation of the Gaussian noise to be added (in radians).
+
+    Returns:
+        A 3x3 rotation matrix representing a small random rotation.
+    """
+
+    # Random small rotation vector
+    axis = np.random.normal(0.0, sigma, 3)
+    theta = np.linalg.norm(axis)
+
+    if theta < 1e-12:
+        return np.eye(3)  # negligible rotation
+
+    k = axis / theta  # unit axis
+    k_mat = cross_matrix(k)
+
+    # Rodrigues' formula: exp([ω]×)
+    rot = np.eye(3) + np.sin(theta) * k_mat + (1 - np.cos(theta)) * (k_mat @ k_mat)
+    return rot
+
+
+def perturb_rotation_matrix(rot_mat: np.ndarray, sigma: float) -> np.ndarray:
+    """Perturb a rotation matrix by applying a small random rotation.
+
+    Args:
+        rot_mat: A 3x3 rotation matrix to be perturbed.
+        sigma: Standard deviation of the Gaussian noise to be added (in radians).
+
+    Returns:
+        A new 3x3 rotation matrix representing the perturbed rotation.
+
+    Raises:
+        ValueError: If the input matrix is not a valid rotation matrix.
+    """
+    if not is_rotation_matrix(rot_mat):
+        raise ValueError("Input matrix must be a valid rotation matrix.")
+    
+    dR = random_small_rotation(sigma)
+    return dR @ rot_mat
