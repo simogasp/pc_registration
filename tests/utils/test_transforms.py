@@ -989,13 +989,13 @@ class TestRotationAligningTwoDirections:
 
     def test_180_degree_alignment(self):
         """Test alignment of opposite vectors."""
-        src = np.array([1, 0, 0])
-        tgt = np.array([-1, 0, 0])
+        src = [np.array([1, 0, 0]), np.array([0, 1, 0]), np.array([0, 0, 1])]
+        tgt = [np.array([-1, 0, 0]), np.array([0, -1, 0]), np.array([0, 0, -1])]
+        for s, t in zip(src, tgt):
+            R = rotation_aligning_two_directions(s, t)
+            result = R @ s
 
-        R = rotation_aligning_two_directions(src, tgt)
-        result = R @ src
-
-        assert np.allclose(result, tgt, atol=1e-6), "Should align to opposite direction"
+            assert np.allclose(result, t, atol=1e-6), "Should align to opposite direction"
 
     def test_arbitrary_alignment(self):
         """Test alignment of arbitrary directions."""
