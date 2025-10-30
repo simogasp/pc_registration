@@ -665,9 +665,6 @@ class TestRotationAligningTwoDirections:
         assert np.allclose(result, tgt, atol=1e-10), "Should align x-axis to y-axis"
         assert is_rotation_matrix(R), "Result should be a valid rotation"
 
-    @pytest.mark.skip(
-        reason="Function doesn't handle anti-parallel vectors (cross product = 0)"
-    )
     def test_180_degree_alignment(self):
         """Test alignment of opposite vectors."""
         src = np.array([1, 0, 0])

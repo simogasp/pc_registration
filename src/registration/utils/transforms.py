@@ -237,20 +237,34 @@ def rotation_aligning_two_directions(
     Returns:
         A 3x3 rotation matrix that aligns src_dir to tgt_dir.
     """
-    # check they are 3D vectors
+    # Validate input dimensions
     if src_dir.shape != (3,) or tgt_dir.shape != (3,):
         raise ValueError("Both source and target directions must be 3D vectors.")
 
-    # check they are not already aligned
-    if np.allclose(
-        src_dir / np.linalg.norm(src_dir), tgt_dir / np.linalg.norm(tgt_dir)
-    ):
+    # Normalize once at the beginning
+    src_normalized = src_dir / np.linalg.norm(src_dir)
+    tgt_normalized = tgt_dir / np.linalg.norm(tgt_dir)
+    
+    # Check if vectors are already aligned (dot product ≈ 1)
+    dot_product = np.dot(src_normalized, tgt_normalized)
+    
+    if np.isclose(dot_product, 1.0, atol=1e-10):
         return np.eye(3)
+    
+    # Check if vectors are opposite (dot product ≈ -1)
+    if np.isclose(dot_product, -1.0, atol=1e-10):
+        # Find an arbitrary orthogonal axis for 180° rotation
+        if not np.isclose(src_normalized[0], 0) or not np.isclose(src_normalized[1], 0):
+            ortho_axis = np.array([-src_normalized[1], src_normalized[0], 0.0])
+        else:
+            ortho_axis = np.array([0.0, -src_normalized[2], src_normalized[1]])
+        ortho_axis /= np.linalg.norm(ortho_axis)
+        return rotation_matrix_from_axis_angle(ortho_axis, np.pi)
 
-    src_dir = src_dir / np.linalg.norm(src_dir)
-    tgt_dir = tgt_dir / np.linalg.norm(tgt_dir)
-    v = np.cross(src_dir, tgt_dir)
+    # General case: compute rotation axis and angle
+    v = np.cross(src_normalized, tgt_normalized)
     v = v / np.linalg.norm(v)
-    angle = np.arccos(np.dot(src_dir, tgt_dir))
+    # Clip to avoid numerical errors in arccos
+    angle = np.arccos(np.clip(dot_product, -1.0, 1.0))
 
     return rotation_matrix_from_axis_angle(v, angle)
