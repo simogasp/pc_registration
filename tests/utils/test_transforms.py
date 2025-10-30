@@ -1144,30 +1144,17 @@ class TestPerturbDirection:
             "Perturbed direction should be a unit vector"
         )
 
-    def test_returns_orthogonal_vector(self):
-        """Test that result is orthogonal to input direction."""
-        direction = np.array([0, 1, 0])
-        sigma = 0.1
-
-        # Run multiple times to ensure it's always orthogonal
-        for _ in range(20):
-            perturbed = perturb_direction(direction, sigma)
-            dot_product = np.dot(direction, perturbed)
-            assert np.abs(dot_product) < 1e-10, (
-                f"Result should be orthogonal to input, got dot product {dot_product}"
-            )
-
-    def test_zero_sigma_returns_orthogonal_direction(self):
-        """Test that zero sigma still returns an orthogonal direction."""
+    def test_zero_sigma_returns_same_direction(self):
+        """Test that zero sigma still returns the same direction."""
         direction = np.array([1, 1, 1]) / np.sqrt(3)
         sigma = 0.0
 
         perturbed = perturb_direction(direction, sigma)
 
-        # Should still be orthogonal (the random axis, just not rotated)
+        # Should still be the same direction
         dot_product = np.dot(direction, perturbed)
-        assert np.abs(dot_product) < 1e-10, (
-            f"Result should be orthogonal even with zero sigma, got dot product {dot_product}"
+        assert np.abs(dot_product - 1) < 1e-10, (
+            f"Result should be the same direction even with zero sigma, got dot product {dot_product}"
         )
 
     def test_different_sigmas_vary_rotation_around_direction(self):
@@ -1181,10 +1168,6 @@ class TestPerturbDirection:
 
         np.random.seed(42)
         perturbed_large = perturb_direction(direction, sigma=1.0)
-
-        # Both should be orthogonal to direction
-        assert np.abs(np.dot(direction, perturbed_small)) < 1e-10
-        assert np.abs(np.dot(direction, perturbed_large)) < 1e-10
 
         # But they should differ from each other (unless angle ~ 0 or ~ 2π)
         angle_between = np.arccos(
@@ -1218,22 +1201,6 @@ class TestPerturbDirection:
             "Result should be unit vector even for non-unit input"
         )
 
-    def test_orthogonality_maintained_across_samples(self):
-        """Test that all samples maintain orthogonality to input direction."""
-        direction = np.array([1, 0, 0])
-        sigma = 0.2
-
-        # Check orthogonality for multiple samples
-        for _ in range(10):
-            perturbed = perturb_direction(direction, sigma)
-            # Should be unit vector
-            assert np.isclose(np.linalg.norm(perturbed), 1.0, atol=1e-10)
-            # Should be orthogonal to input
-            dot_product = np.dot(direction, perturbed)
-            assert np.abs(dot_product) < 1e-10, (
-                f"Result should be orthogonal to input, got dot product {dot_product}"
-            )
-
     def test_different_directions(self):
         """Test perturbation works for various input directions."""
         test_directions = [
@@ -1251,11 +1218,6 @@ class TestPerturbDirection:
             # Should be unit vector
             assert np.isclose(np.linalg.norm(perturbed), 1.0, atol=1e-10), (
                 f"Perturbed direction should be unit for {direction}"
-            )
-            # Should be orthogonal to input
-            dot_product = np.dot(direction, perturbed)
-            assert np.abs(dot_product) < 1e-10, (
-                f"Result should be orthogonal for direction {direction}"
             )
 
 
@@ -1551,3 +1513,11 @@ class TestPerturbRotationMatrix:
         assert is_rotation_matrix(R_composed), (
             "Composition with perturbed rotation should be valid"
         )
+    
+    def test_wrong_input_raises_error(self):
+        """Test that non-rotation matrix input raises ValueError."""
+        R_invalid = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 2]])  # Not a rotation
+
+        with pytest.raises(ValueError, match="valid rotation matrix"):
+            perturb_rotation_matrix(R_invalid, 0.1)
+

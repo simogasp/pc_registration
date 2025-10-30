@@ -320,10 +320,7 @@ def perturb_direction(direction: np.ndarray, sigma: float) -> np.ndarray:
     # Generate a small random angle
     angle = np.random.normal(0, sigma)
 
-    new_axis = random_axis * np.cos(angle) + np.cross(random_axis, direction) * np.sin(
-        angle
-    )
-
+    new_axis = rotation_matrix_from_axis_angle(random_axis, angle) @ direction
     return new_axis / np.linalg.norm(new_axis)
 
 
