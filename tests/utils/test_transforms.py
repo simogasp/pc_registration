@@ -20,6 +20,7 @@ from registration.utils.transforms import (
     rot_mat_x,
     rot_mat_y,
     rot_mat_z,
+    get_flip_transform,
 )
 
 
@@ -2210,3 +2211,199 @@ class TestAxisRotationsInteraction:
         assert np.allclose(Rz_specific, Rz_general, atol=1e-10), (
             "Z rotation should match general"
         )
+
+
+class TestGetFlipTransform:
+    """Tests for get_flip_transform function."""
+
+    def test_output_shape(self):
+        """Test that output is always a 4x4 matrix."""
+        for axis in ["x", "y", "z", "nx", "ny", "nz"]:
+            T = get_flip_transform(axis)
+            assert T.shape == (4, 4), f"Output for axis '{axis}' must be 4x4 matrix"
+
+    def test_homogeneous_structure(self):
+        """Test that transformation has correct homogeneous structure."""
+        for axis in ["x", "y", "z", "nx", "ny", "nz"]:
+            T = get_flip_transform(axis)
+
+            # Bottom row should be [0, 0, 0, 1]
+            assert np.allclose(T[3, :3], [0, 0, 0]), (
+                f"Bottom left for '{axis}' should be zeros"
+            )
+            assert np.isclose(T[3, 3], 1.0), f"Bottom right for '{axis}' should be 1"
+
+            # Translation component should be zero
+            assert np.allclose(T[:3, 3], [0, 0, 0]), (
+                f"Translation for '{axis}' should be zero"
+            )
+
+    def test_rotation_matrix_validity(self):
+        """Test that rotation part is a valid rotation matrix."""
+        for axis in ["x", "y", "z", "nx", "ny", "nz"]:
+            T = get_flip_transform(axis)
+            R = T[:3, :3]
+
+            assert is_rotation_matrix(R), (
+                f"Rotation part for '{axis}' should be valid rotation matrix"
+            )
+
+    def test_x_axis_flip(self):
+        """Test flip transformation around x-axis."""
+        T = get_flip_transform("x")
+        R_expected = rot_mat_x(np.pi / 2)
+
+        assert np.allclose(T[:3, :3], R_expected, atol=1e-10), (
+            "X-axis flip should be 90° rotation around x"
+        )
+
+    def test_nx_axis_flip(self):
+        """Test flip transformation around negative x-axis."""
+        T = get_flip_transform("nx")
+        R_expected = rot_mat_x(-np.pi / 2)
+
+        assert np.allclose(T[:3, :3], R_expected, atol=1e-10), (
+            "Negative x-axis flip should be -90° rotation around x"
+        )
+
+    def test_y_axis_flip(self):
+        """Test flip transformation around y-axis."""
+        T = get_flip_transform("y")
+        R_expected = rot_mat_y(np.pi / 2)
+
+        assert np.allclose(T[:3, :3], R_expected, atol=1e-10), (
+            "Y-axis flip should be 90° rotation around y"
+        )
+
+    def test_ny_axis_flip(self):
+        """Test flip transformation around negative y-axis."""
+        T = get_flip_transform("ny")
+        R_expected = rot_mat_y(-np.pi / 2)
+
+        assert np.allclose(T[:3, :3], R_expected, atol=1e-10), (
+            "Negative y-axis flip should be -90° rotation around y"
+        )
+
+    def test_z_axis_flip(self):
+        """Test flip transformation around z-axis."""
+        T = get_flip_transform("z")
+        R_expected = rot_mat_z(np.pi / 2)
+
+        assert np.allclose(T[:3, :3], R_expected, atol=1e-10), (
+            "Z-axis flip should be 90° rotation around z"
+        )
+
+    def test_nz_axis_flip(self):
+        """Test flip transformation around negative z-axis."""
+        T = get_flip_transform("nz")
+        R_expected = rot_mat_z(-np.pi / 2)
+
+        assert np.allclose(T[:3, :3], R_expected, atol=1e-10), (
+            "Negative z-axis flip should be -90° rotation around z"
+        )
+
+    def test_opposite_axes_are_inverses(self):
+        """Test that positive and negative axis flips are inverses."""
+        for base_axis in ["x", "y", "z"]:
+            T_pos = get_flip_transform(base_axis)
+            T_neg = get_flip_transform(f"n{base_axis}")
+
+            # Product should be identity
+            T_product = T_pos @ T_neg
+            assert np.allclose(T_product, np.eye(4), atol=1e-10), (
+                f"'{base_axis}' and 'n{base_axis}' should be inverses"
+            )
+
+    def test_four_applications_return_to_original(self):
+        """Test that applying flip 4 times returns to original (360° rotation)."""
+        for axis in ["x", "y", "z", "nx", "ny", "nz"]:
+            T = get_flip_transform(axis)
+
+            # Apply 4 times (4 × 90° = 360°)
+            T_composed = T @ T @ T @ T
+
+            assert np.allclose(T_composed, np.eye(4), atol=1e-10), (
+                f"Four applications of '{axis}' flip should return to identity"
+            )
+
+    def test_invalid_axis_raises_error(self):
+        """Test that invalid axis raises ValueError."""
+        invalid_axes = ["a", "xy", "X", "N", "nx1", "", "xyz", "1"]
+
+        for invalid_axis in invalid_axes:
+            with pytest.raises(ValueError, match="Invalid flip axis"):
+                get_flip_transform(invalid_axis)
+
+    def test_point_transformation_x_axis(self):
+        """Test transformation of a point using x-axis flip."""
+        T = get_flip_transform("x")
+
+        # Point on positive y-axis should move to positive z-axis
+        point_homogeneous = np.array([0, 1, 0, 1])
+        transformed = T @ point_homogeneous
+
+        # After 90° rotation around x: y → z
+        expected = np.array([0, 0, 1, 1])
+        assert np.allclose(transformed, expected, atol=1e-10), (
+            "Point [0,1,0] should transform to [0,0,1] with x-axis flip"
+        )
+
+    def test_point_transformation_y_axis(self):
+        """Test transformation of a point using y-axis flip."""
+        T = get_flip_transform("y")
+
+        # Point on positive z-axis should move to positive x-axis
+        point_homogeneous = np.array([0, 0, 1, 1])
+        transformed = T @ point_homogeneous
+
+        # After 90° rotation around y: z → x
+        expected = np.array([1, 0, 0, 1])
+        assert np.allclose(transformed, expected, atol=1e-10), (
+            "Point [0,0,1] should transform to [1,0,0] with y-axis flip"
+        )
+
+    def test_point_transformation_z_axis(self):
+        """Test transformation of a point using z-axis flip."""
+        T = get_flip_transform("z")
+
+        # Point on positive x-axis should move to positive y-axis
+        point_homogeneous = np.array([1, 0, 0, 1])
+        transformed = T @ point_homogeneous
+
+        # After 90° rotation around z: x → y
+        expected = np.array([0, 1, 0, 1])
+        assert np.allclose(transformed, expected, atol=1e-10), (
+            "Point [1,0,0] should transform to [0,1,0] with z-axis flip"
+        )
+
+    def test_determinant_is_one(self):
+        """Test that transformation matrix has determinant +1."""
+        for axis in ["x", "y", "z", "nx", "ny", "nz"]:
+            T = get_flip_transform(axis)
+            det = np.linalg.det(T)
+
+            assert np.isclose(det, 1.0, atol=1e-10), (
+                f"Determinant for '{axis}' should be +1, got {det}"
+            )
+
+    def test_orthogonality_of_rotation_part(self):
+        """Test that rotation part is orthogonal (R^T R = I)."""
+        for axis in ["x", "y", "z", "nx", "ny", "nz"]:
+            T = get_flip_transform(axis)
+            R = T[:3, :3]
+
+            product = R.T @ R
+            assert np.allclose(product, np.eye(3), atol=1e-10), (
+                f"Rotation part for '{axis}' should be orthogonal"
+            )
+
+    def test_consistency_between_positive_and_negative(self):
+        """Test relationship between positive and negative axis flips."""
+        for base_axis in ["x", "y", "z"]:
+            T_pos = get_flip_transform(base_axis)
+            T_neg = get_flip_transform(f"n{base_axis}")
+
+            # They should differ by 180° (two applications)
+            assert np.allclose(T_pos @ T_pos, T_neg @ T_neg, atol=1e-10), (
+                f"Two applications of '{base_axis}' and 'n{base_axis}' should match"
+            )

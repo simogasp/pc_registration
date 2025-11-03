@@ -474,3 +474,52 @@ def rot_mat_z(angle: float) -> np.ndarray:
         A 3x3 rotation matrix representing the rotation around the z-axis.
     """
     return rotation_matrix_from_axis_angle(np.array([0.0, 0.0, 1.0]), angle)
+
+
+def get_flip_transform(axis: str) -> np.ndarray:
+    """Generate a 4x4 transformation matrix that flips a point cloud along a specified axis.
+
+    This function creates a transformation that rotates the point cloud by ±90° around
+    the specified axis. The "flip" is achieved through a 90° rotation, which effectively
+    reorients the point cloud along that axis direction.
+
+    Args:
+        axis: The axis specification for the flip transformation. Valid values are:
+            - "x" or "nx": Flip along the x-axis (rotate by +90° or -90°)
+            - "y" or "ny": Flip along the y-axis (rotate by +90° or -90°)
+            - "z" or "nz": Flip along the z-axis (rotate by +90° or -90°)
+            The "n" prefix indicates a negative rotation direction.
+
+    Returns:
+        A 4x4 homogeneous transformation matrix with the rotation component set
+        to the specified flip rotation and zero translation.
+
+    Raises:
+        ValueError: If the axis parameter is not one of the valid values.
+
+    Note:
+        The transformation matrix has the form:
+
+        .. math::
+
+            T = \\begin{bmatrix}
+                R & 0 \\\\
+                0 & 1
+            \\end{bmatrix}
+
+        where :math:`R` is a 3x3 rotation matrix for ±90° around the specified axis.
+    """
+    transform = np.eye(4)
+    if axis == "x" or axis == "nx":
+        sign = -1 if axis == "nx" else 1
+        transform[:3, :3] = rot_mat_x(sign * np.pi / 2)
+    elif axis == "y" or axis == "ny":
+        sign = -1 if axis == "ny" else 1
+        transform[:3, :3] = rot_mat_y(sign * np.pi / 2)
+    elif axis == "z" or axis == "nz":
+        sign = -1 if axis == "nz" else 1
+        transform[:3, :3] = rot_mat_z(sign * np.pi / 2)
+    else:
+        raise ValueError(f"Invalid flip axis: {axis}")
+
+    return transform
