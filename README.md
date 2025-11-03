@@ -5,6 +5,7 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![codecov](https://codecov.io/gh/simogasp/pc_registration/graph/badge.svg?token=V51VN2ARZN)](https://codecov.io/gh/simogasp/pc_registration)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8919a02c718c48939afae78e49653184)](https://app.codacy.com/gh/simogasp/pc_registration/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsimogasp%2Fpc_registration.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsimogasp%2Fpc_registration?ref=badge_shield)
 
 This project provides implementations of various point cloud registration algorithms using Open3D, including:
