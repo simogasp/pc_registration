@@ -10,6 +10,11 @@ on:
     # Weekly on Mondays at 07:50 UTC
     - cron: '50 7 * * 1'
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
