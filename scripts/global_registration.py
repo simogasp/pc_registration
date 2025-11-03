@@ -9,50 +9,24 @@ import open3d as o3d
 
 from registration.utils.logging import setup_logging
 from registration.utils.metrics import compute_rmse_transformations
-from registration.utils.transforms import transformation_error
+from registration.utils.transforms import (
+    transformation_error,
+    rototranslation_from_rotation_translation,
+    perturb_direction,
+    generate_random_rotation_matrix,
+    rotation_aligning_two_directions,
+)
 from registration.visualization.viewer import (
     draw_registration_result,
     print_point_cloud_info,
 )
+from registration.utils.point_cloud import (
+    rough_scale_point_cloud,
+    rough_scale_point_cloud_from_file,
+    align_centers_from_files,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def rough_scale_point_cloud(pcd: o3d.geometry.PointCloud) -> float:
-    """Estimate a rough scale of the point cloud based on its oriented bounding box.
-
-    This function computes the oriented bounding box (OBB) of the input point cloud
-    and returns a scale factor that is a power of ten closest to the maximum extent
-    of the OBB. This scale can be useful for setting parameters in visualization
-    or processing algorithms that depend on the size of the point cloud.
-    Args:
-        pcd: The input point cloud to analyze.
-    Returns:
-        A scale factor that is a power of ten closest to the maximum extent of the OBB.
-    """
-    obb = pcd.get_minimal_oriented_bounding_box()
-    max_extent = max(obb.extent)
-    # return the closest power of ten
-    return 10 ** np.floor(np.log10(max_extent))
-
-
-def rough_scale_point_cloud_from_file(pcd_filename: str) -> float:
-    """Estimate a rough scale of the point cloud based on its oriented bounding box.
-
-    This function loads a point cloud from the specified file, computes its
-    oriented bounding box (OBB), and returns a scale factor that is a power of ten
-    closest to the maximum extent of the OBB. This scale can be useful for setting
-    parameters in visualization or processing algorithms that depend on the size
-    of the point cloud.
-
-    Args:
-        pcd_filename: The file path to the point cloud to analyze.
-
-    Returns:
-        A scale factor that is a power of ten closest to the maximum extent of the OBB.
-    """
-    pcd = o3d.io.read_point_cloud(pcd_filename)
-    return rough_scale_point_cloud(pcd)
 
 
 def preprocess_point_cloud(pcd, voxel_size: float) -> tuple:
@@ -91,8 +65,36 @@ def preprocess_point_cloud(pcd, voxel_size: float) -> tuple:
     return pcd_down, pcd_fpfh
 
 
+def is_solution_upside_down(transformation: np.ndarray, idx_gravity_axis: int) -> bool:
+    """Check if the given transformation results in an upside-down alignment.
+
+    This function examines the rotation component of the provided transformation
+    matrix to determine if the direction corresponding to the specified gravity axis
+    is inverted (i.e., points in the opposite direction). This can be useful for
+    validating registration results against expected orientations.
+
+    Args:
+        transformation: A 4x4 transformation matrix to evaluate.
+        idx_gravity_axis: The index of the gravity axis (0 for x, 1 for y, 2 for z).
+    Returns:
+        True if the solution is upside down, False otherwise.
+    Raises:
+        ValueError: If idx_gravity_axis is not 0, 1, or 2.
+    """
+    if idx_gravity_axis < 0 or idx_gravity_axis > 2:
+        raise ValueError("idx_gravity_axis must be 0 (x), 1 (y), or 2 (z)")
+
+    gravity = np.eye(3)[:, idx_gravity_axis]
+    direction = transformation[:3, :3] @ gravity
+    return np.dot(direction, gravity) < 0
+
+
 def prepare_dataset(
-    source_file: str, target_file: str, voxel_size: float, trans_init=np.identity(4)
+    source_file: str,
+    target_file: str,
+    voxel_size: float,
+    trans_init: np.ndarray = np.identity(4),
+    correction: np.ndarray = np.identity(4),
 ) -> tuple:
     """Load and prepare point cloud datasets for registration.
 
@@ -105,6 +107,7 @@ def prepare_dataset(
         target_file: File path to the target point cloud.
         voxel_size: The size of the voxel for downsampling both point clouds.
         trans_init: Initial transformation matrix to apply to the source cloud (default: identity matrix).
+        correction: Correction transformation matrix to apply to both clouds, typically to align to the visual reference frame (default: identity matrix).
 
     Returns:
         A tuple containing:
@@ -117,8 +120,10 @@ def prepare_dataset(
     """
     logger.info("Load two point clouds and disturb initial pose")
     source: o3d.geometry.PointCloud = o3d.io.read_point_cloud(source_file)
+    source.transform(correction)
     print_point_cloud_info(source, f"Source: {source_file}")
     target: o3d.geometry.PointCloud = o3d.io.read_point_cloud(target_file)
+    target.transform(correction)
     print_point_cloud_info(target, f"Target: {target_file}")
     # trans_init = np.asarray([[0.0, 0.0, 1.0, 0.0],
     #                          [1.0, 0.0, 0.0, 0.0],
@@ -143,7 +148,12 @@ def prepare_dataset(
 
 
 def execute_global_registration(
-    source_down, target_down, source_fpfh, target_fpfh, voxel_size, max_iter_icp=2000
+    source_down: o3d.geometry.PointCloud,
+    target_down: o3d.geometry.PointCloud,
+    source_fpfh: o3d.pipelines.registration.Feature,
+    target_fpfh: o3d.pipelines.registration.Feature,
+    voxel_size: float,
+    max_iter_icp: int = 2000,
 ):
     """Execute RANSAC-based global registration between two point clouds.
 
@@ -188,7 +198,12 @@ def execute_global_registration(
     return result
 
 
-def refine_registration(source, target, voxel_size: float, initial_transformation):
+def refine_registration(
+    source: o3d.geometry.PointCloud,
+    target: o3d.geometry.PointCloud,
+    voxel_size: float,
+    initial_transformation: np.ndarray,
+) -> o3d.pipelines.registration.RegistrationResult:
     """Refine registration using point-to-plane ICP algorithm.
 
     Performs Iterative Closest Point (ICP) registration with point-to-plane metric
@@ -227,6 +242,44 @@ def refine_registration(source, target, voxel_size: float, initial_transformatio
     return result
 
 
+def gravity_transformation(
+    gravity_direction: np.ndarray, gravity_axis: int = 1
+) -> np.ndarray:
+    """Compute a transformation matrix to align a given gravity direction.
+
+    This function computes a rotation matrix that aligns the specified gravity
+    direction with the desired gravity axis (default is y-axis). This can be useful if the
+    gravity vector is given by an IMU sensor in a reference system similar (same up direction)
+    to the one of the point cloud.
+    It returns a 4x4 transformation matrix that can be applied to point clouds so that the
+    point cloud is aligned with the gravity direction.
+
+    Args:
+        gravity_direction: A 3D vector representing the measured gravity direction in the point cloud's reference frame.
+        gravity_axis: The axis index (0 for x, 1 for y, 2 for z) to align the gravity direction to.
+
+    Returns:
+        A 4x4 transformation matrix with null translation that aligns the gravity direction with the specified axis.
+    """
+    if gravity_axis < 0 or gravity_axis > 2:
+        raise ValueError("gravity_axis must be 0 (x), 1 (y), or 2 (z)")
+
+    # @TODO this is to add some noise to the gravity direction
+    dst_gravity_direction = perturb_direction(
+        np.eye(3)[:, gravity_axis], sigma=np.deg2rad(1)
+    )
+    dst_gravity_direction = np.eye(3)[:, gravity_axis]
+
+    logger.info(f"dst_gravity_direction: {dst_gravity_direction}")
+    gravity_aligned_rotation = rotation_aligning_two_directions(
+        gravity_direction, dst_gravity_direction
+    )
+    gravity_transform = rototranslation_from_rotation_translation(
+        gravity_aligned_rotation, np.zeros(3)
+    )
+    return gravity_transform
+
+
 def main(args: argparse.Namespace):
     """Main function to execute the complete point cloud registration pipeline.
 
@@ -245,8 +298,27 @@ def main(args: argparse.Namespace):
     """
     voxel_size = args.voxel_size
     frame_size = rough_scale_point_cloud_from_file(args.source)
+    min_fitness = args.min_fitness
+
+    # this is just for visualization purposes, the axis of the reference frame of the scan may be different than the one of the window
+    # correction = rototranslation_from_rotation_translation(
+    #     rot_mat_z(np.deg2rad(90)), np.zeros(3)
+    # )
+    correction = np.eye(4)
 
     trans_init = np.asarray(
+        # [
+        #     [0.862, 0.011, -0.507, 0.05],
+        #     [-0.139, 0.967, -0.215, 0.07],
+        #     [0.487, 0.255, 0.835, -0.0004],
+        #     [0.0, 0.0, 0.0, 1.0],
+        # ]
+        # [
+        #     [1.0, 0.0, 0.0, 2000.05],
+        #     [0.0, 1.0, 0.0, 510.07],
+        #     [0.0, 0.0, 1.0, -0.0004],
+        #     [0.0, 0.0, 0.0, 1.0],
+        # ]
         [
             [0.862, 0.011, -0.507, 3.10005 * frame_size],
             [-0.139, 0.967, -0.215, 3.51007 * frame_size],
@@ -255,21 +327,62 @@ def main(args: argparse.Namespace):
         ]
     )
 
-    source, target, source_down, target_down, source_fpfh, target_fpfh = (
-        prepare_dataset(args.source, args.target, voxel_size, trans_init)
+    trans_init[:3, :3] = generate_random_rotation_matrix()
+    # trans_init = np.eye(4)
+
+    # supposing that we know an estimation of the gravity vector (e.g. along the y-axis/up vector)
+    # we can try to use it to align the point clouds so that y-axis is aligned
+    # here we use the y vector of the initial transformation and perturb it a bit to simulate the
+    # direction of the gravity
+    idx_gravity_axis = 1
+
+    gravity_transform = gravity_transformation(
+        trans_init[:3, idx_gravity_axis], gravity_axis=idx_gravity_axis
+    )
+    trans_init = gravity_transform @ trans_init
+
+    trans_init = (
+        align_centers_from_files(args.source, args.target, trans_init, correction)
+        @ trans_init
     )
 
-    start = time.time()
-    result_ransac = execute_global_registration(
-        source_down,
-        target_down,
-        source_fpfh,
-        target_fpfh,
-        voxel_size,
-        args.max_iter_icp,
+    logger.debug(f"axis aligned:\n{trans_init @ np.eye(4)[:, idx_gravity_axis]}")
+
+    source, target, source_down, target_down, source_fpfh, target_fpfh = (
+        prepare_dataset(args.source, args.target, voxel_size, trans_init, correction)
     )
-    logger.info(f"Global registration took {(time.time() - start): .3f} sec.")
-    logger.info(f"RANSAC result: {result_ransac}")
+
+    result_ransac: o3d.pipelines.registration.RegistrationResult = None
+    start = time.time()
+    global_attempts = 1
+    while not result_ransac or result_ransac.fitness < min_fitness:
+        result_ransac = execute_global_registration(
+            source_down,
+            target_down,
+            source_fpfh,
+            target_fpfh,
+            voxel_size,
+            args.max_iter_icp,
+        )
+
+        logger.info(f"RANSAC attempt {global_attempts} result: {result_ransac}")
+        global_attempts += 1
+
+        # check if the solution is correct wrt the gravity direction, we want to discard solutions that are upside down
+        # @TODO maybe should pass transformation @ init_trans
+        if result_ransac.fitness >= min_fitness and is_solution_upside_down(
+            result_ransac.transformation, idx_gravity_axis
+        ):
+            logger.warning(
+                f"RANSAC attempt {global_attempts} result is upside down, discarding."
+            )
+            result_ransac = None
+            continue
+
+    logger.info(
+        f"Global found a solution in {global_attempts} attempts, taking {(time.time() - start): .3f} sec."
+    )
+
     draw_registration_result(
         source_down,
         target_down,
@@ -300,6 +413,7 @@ def main(args: argparse.Namespace):
     logger.debug(
         f"product of the transformations:\n{result_icp.transformation @ (trans_init)}"
     )
+    # NB this only make sense if you are aligning the same model
     # difference between initial and final transformation
     rot_err, trans_err = transformation_error(
         result_icp.transformation, np.linalg.inv(trans_init)
@@ -321,6 +435,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Global registration")
     parser.add_argument("--source", type=str, help="source file path", required=True)
     parser.add_argument("--target", type=str, help="taraget file path", required=True)
+    parser.add_argument(
+        "--min-fitness",
+        type=float,
+        help="minimum fitness for RANSAC",
+        default=0.5,
+        required=False,
+    )
     parser.add_argument(
         "--voxel-size", type=float, help="voxels size for downsampling", default=0.05
     )
