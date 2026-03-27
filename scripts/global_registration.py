@@ -434,7 +434,7 @@ if __name__ == "__main__":
     # add input file argument
     parser = argparse.ArgumentParser(description="Global registration")
     parser.add_argument("--source", type=str, help="source file path", required=True)
-    parser.add_argument("--target", type=str, help="taraget file path", required=True)
+    parser.add_argument("--target", type=str, help="target file path", required=True)
     parser.add_argument(
         "--min-fitness",
         type=float,
