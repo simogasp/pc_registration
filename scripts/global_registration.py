@@ -183,17 +183,21 @@ def execute_global_registration(
         target_down,
         source_fpfh,
         target_fpfh,
-        True,
-        distance_threshold,
-        o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
-        3,
-        [
+        mutual_filter=True,
+        distance_threshold=distance_threshold,
+        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(
+            False
+        ),
+        ransac_n=3,
+        checkers=[
             o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
             o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
                 distance_threshold
             ),
         ],
-        o3d.pipelines.registration.RANSACConvergenceCriteria(max_iter_icp, 0.999),
+        criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(
+            max_iter_icp, 0.999
+        ),
     )
     return result
 
