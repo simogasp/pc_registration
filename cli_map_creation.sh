@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Example of commands to run to create the map from the sequence registration results, visualize it, and visualize an animation of the original scans with the fused map. 
 # The first part is run with ground truth poses, while the second part is run without ground truth by estimating the poses.
 
