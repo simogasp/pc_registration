@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-04-03T19:00:41.804899",
+  "data_dir": "data/dataset_real_lidar",
+  "output_dir": "output/sequence_registration/fuse/filtered_distance_full",
+  "voxel_size": 10.0,
+  "skip_raw": false,
+  "skip_fused": false,
+  "remove_outliers": false,
+  "outlier_nb_neighbors": 20,
+  "outlier_std_ratio": 2.0,
+  "filter_distant": true,
+  "max_distance": null,
+  "distance_percentile": 99.999,
+  "start_scan_requested": null,
+  "end_scan_requested": null,
+  "start_scan_actual": 0,
+  "end_scan_actual": 379,
+  "total_scans_available": 380,
+  "num_scans_processed": 380
+}
