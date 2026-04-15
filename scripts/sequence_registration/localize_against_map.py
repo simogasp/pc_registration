@@ -205,7 +205,9 @@ def _load_scan_for_refinement(
     """
     if not _needs_separate_refinement_clouds(refinement_voxel_size, ransac_voxel_size):
         return scan_ransac
-    voxel_for_loading = refinement_voxel_size if refinement_voxel_size is not None else 0.0
+    voxel_for_loading = (
+        refinement_voxel_size if refinement_voxel_size is not None else 0.0
+    )
     res_label = f"{voxel_for_loading} mm" if voxel_for_loading > 0 else "original"
     logger.debug(f"Loading scan at refinement resolution ({res_label})...")
     return load_point_cloud(ply_path, voxel_size=voxel_for_loading)
@@ -289,14 +291,18 @@ def process_single_scan(
         scan_refine = _load_scan_for_refinement(
             ply_path, refinement_voxel_size, scan_ransac, voxel_size
         )
-        map_refine = global_map_refinement if global_map_refinement is not None else global_map
+        map_refine = (
+            global_map_refinement if global_map_refinement is not None else global_map
+        )
         if _needs_separate_refinement_clouds(refinement_voxel_size, voxel_size):
             logger.info(
                 f"Refining pose with {refinement_name} at refinement resolution "
                 f"(scan: {len(scan_refine.points)} pts, map: {len(map_refine.points)} pts)..."
             )
         else:
-            logger.info(f"Refining pose with {refinement_name} (reusing RANSAC clouds)...")
+            logger.info(
+                f"Refining pose with {refinement_name} (reusing RANSAC clouds)..."
+            )
         H_estimated, icp_result = pairwise_registration(
             source=scan_refine,
             target=map_refine,
@@ -331,7 +337,10 @@ def process_single_scan(
 
     # Create result entry for JSON output
     localization_stats = (
-        {"fitness": float(reg_result.fitness), "inlier_rmse": float(reg_result.inlier_rmse)}
+        {
+            "fitness": float(reg_result.fitness),
+            "inlier_rmse": float(reg_result.inlier_rmse),
+        }
         if reg_result is not None
         else {}
     )
@@ -488,7 +497,9 @@ def localize_scans(
         )
 
     # Determine method string based on refinement settings
-    method_str = _build_method_string(refine_poses, use_gicp, voxel_size, refinement_voxel_size)
+    method_str = _build_method_string(
+        refine_poses, use_gicp, voxel_size, refinement_voxel_size
+    )
     if prior_estimated_poses is not None:
         method_str = f"{method_str} [from pre-estimated poses]"
 
@@ -529,10 +540,14 @@ def localize_scans(
 
     # Load map at refinement resolution if a separate resolution is requested
     global_map_refinement = None
-    if refine_poses and _needs_separate_refinement_clouds(refinement_voxel_size, voxel_size):
+    if refine_poses and _needs_separate_refinement_clouds(
+        refinement_voxel_size, voxel_size
+    ):
         ref_voxel = refinement_voxel_size if refinement_voxel_size is not None else 0.0
         global_map_refinement = load_point_cloud(map_path, voxel_size=ref_voxel)
-        logger.info(f"Global map (refinement): {len(global_map_refinement.points)} points")
+        logger.info(
+            f"Global map (refinement): {len(global_map_refinement.points)} points"
+        )
 
     logger.info(f"Voxel size: {voxel_size} mm")
     logger.info(f"Max correspondence distance: {max_correspondence_distance} mm")
@@ -567,7 +582,9 @@ def localize_scans(
             use_gicp=use_gicp,
             refinement_voxel_size=refinement_voxel_size,
             global_map_refinement=global_map_refinement,
-            estimated_pose=prior_estimated_poses[i] if prior_estimated_poses is not None else None,
+            estimated_pose=prior_estimated_poses[i]
+            if prior_estimated_poses is not None
+            else None,
         )
 
         # Store statistics
@@ -630,7 +647,9 @@ def localize_scans(
                 if refine_poses
                 else None,
                 "use_gicp": use_gicp if refine_poses else None,
-                "refinement_voxel_size": refinement_voxel_size if refine_poses else None,
+                "refinement_voxel_size": refinement_voxel_size
+                if refine_poses
+                else None,
                 "estimated_poses_file": estimated_poses_file,
                 "method": method_str,
             },
