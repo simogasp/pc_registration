@@ -17,7 +17,8 @@ class ColoredFormatter(logging.Formatter):
     }
     RESET = "\033[0m"
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
+        """Format the log record with ANSI colour codes applied to the level name."""
         # Save the original levelname
         levelname = record.levelname
 

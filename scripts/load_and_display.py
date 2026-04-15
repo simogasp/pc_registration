@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+"""Load and display a point cloud file."""
 
 import argparse
 import logging

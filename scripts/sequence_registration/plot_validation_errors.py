@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Plot histogram distributions of validation errors.
+"""Plot histogram distributions of validation errors.
 
 This script reads a validation JSON file and creates histogram plots
 for rotation and translation errors across all validated pairs.

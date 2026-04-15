@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Visualize scan acquisition sequence with animation.
+"""Visualize scan acquisition sequence with animation.
 
 This script displays an animated sequence of point cloud scans, showing:
 - World coordinate frame (origin)
@@ -69,8 +68,7 @@ def calculate_trajectory_length(points: np.ndarray) -> float:
 
 
 class SequenceVisualizer:
-    """
-    Visualizer for animating point cloud scan sequences.
+    """Visualizer for animating point cloud scan sequences.
 
     Displays each scan in sequence with world and LiDAR coordinate frames,
     with optional fused map overlay and keyboard controls for navigation.
@@ -85,8 +83,7 @@ class SequenceVisualizer:
         end_scan: Optional[int] = None,
         poses_file: Optional[str] = None,
     ):
-        """
-        Initialize the sequence visualizer.
+        """Initialize the sequence visualizer.
 
         Args:
             scan_pairs: List of (ply_path, json_path) tuples.
@@ -244,8 +241,7 @@ class SequenceVisualizer:
         )
 
     def _create_coordinate_frame(self, size: float = COORDINATE_FRAME_SIZE):
-        """
-        Create a coordinate frame mesh.
+        """Create a coordinate frame mesh.
 
         Args:
             size: Size of the coordinate frame axes in mm.
@@ -256,8 +252,7 @@ class SequenceVisualizer:
         return o3d.geometry.TriangleMesh.create_coordinate_frame(size=size)
 
     def _load_scan_at_index(self, scan_idx: int):
-        """
-        Load and transform scan at given index.
+        """Load and transform scan at given index.
 
         Args:
             scan_idx: Index of scan to load.
@@ -441,8 +436,7 @@ class SequenceVisualizer:
         return False
 
     def _update_fused_map_downsampling(self):
-        """
-        Update fused map with current downsampling settings.
+        """Update fused map with current downsampling settings.
 
         Removes the current map, applies downsampling if enabled, and re-adds it.
         """
@@ -487,8 +481,7 @@ class SequenceVisualizer:
             self.vis.add_geometry(self.fused_map_geometry, reset_bounding_box=False)
 
     def _animation_callback(self, vis):
-        """
-        Animation callback for automatic playback.
+        """Animation callback for automatic playback.
 
         Called periodically to advance to next scan when playing.
         """

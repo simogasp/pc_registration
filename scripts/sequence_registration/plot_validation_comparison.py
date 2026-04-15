@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Plot validation statistics comparison across different parameters.
+"""Plot validation statistics comparison across different parameters.
 
 This script reads validation JSON files and creates comparison plots
 for different voxel sizes across various step values.

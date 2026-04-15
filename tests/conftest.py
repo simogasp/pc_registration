@@ -58,8 +58,7 @@ def sample_transformation_matrix():
 
 
 def create_rotation_matrix(axis: str, angle_deg: float) -> np.ndarray:
-    """
-    Helper function to create rotation matrices.
+    """Helper function to create rotation matrices.
 
     Args:
         axis: Rotation axis ('x', 'y', or 'z')

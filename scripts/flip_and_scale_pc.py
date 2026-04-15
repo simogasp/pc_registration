@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+"""Flip and scale a point cloud along a specified axis."""
 
 import argparse
 import logging

@@ -1,3 +1,5 @@
+"""Annotate point clouds with semantic labels."""
+
 import json
 import logging
 import shutil

@@ -308,7 +308,6 @@ def is_rotation_matrix(mat: np.ndarray) -> bool:
     Returns:
         True if the matrix is a valid rotation matrix, False otherwise.
     """
-
     # Check orthogonality
     if not np.allclose(mat.T @ mat, np.eye(3)):
         return False
@@ -364,7 +363,7 @@ def rotation_aligning_two_directions(
 
 
 def perturb_direction(direction: np.ndarray, sigma: float) -> np.ndarray:
-    """Perturb a direction vector by rotating by a small random rotation
+    """Perturb a direction vector by rotating by a small random rotation.
 
     Args:
         direction: A 3D unit vector representing the original direction.
@@ -404,7 +403,6 @@ def random_small_rotation(sigma):
     Returns:
         A 3x3 rotation matrix representing a small random rotation.
     """
-
     # Random small rotation vector
     axis = np.random.normal(0.0, sigma, 3)
     theta = np.linalg.norm(axis)
@@ -477,7 +475,7 @@ def rot_mat_z(angle: float) -> np.ndarray:
 
 
 def get_flip_transform(axis: str) -> np.ndarray:
-    """Generate a 4x4 transformation matrix that flips a point cloud along a specified axis.
+    r"""Generate a 4x4 transformation matrix that flips a point cloud along a specified axis.
 
     This function creates a transformation that rotates the point cloud by ±90° around
     the specified axis. The "flip" is achieved through a 90° rotation, which effectively

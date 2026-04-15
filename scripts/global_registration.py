@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+"""Run global registration between two point clouds."""
 
 import argparse
 import logging
@@ -76,8 +77,10 @@ def is_solution_upside_down(transformation: np.ndarray, idx_gravity_axis: int) -
     Args:
         transformation: A 4x4 transformation matrix to evaluate.
         idx_gravity_axis: The index of the gravity axis (0 for x, 1 for y, 2 for z).
+
     Returns:
         True if the solution is upside down, False otherwise.
+
     Raises:
         ValueError: If idx_gravity_axis is not 0, 1, or 2.
     """

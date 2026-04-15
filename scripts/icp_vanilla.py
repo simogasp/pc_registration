@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+"""Run vanilla ICP registration between two point clouds."""
 
 import argparse
 import logging

@@ -65,7 +65,7 @@ def align_centers(
     trans_init: np.ndarray = np.identity(4),
     correction: np.ndarray = np.identity(4),
 ) -> np.ndarray:
-    """Compute a transformation to align the centroids of two point clouds.
+    r"""Compute a transformation to align the centroids of two point clouds.
 
     This function applies optional correction and initial transformations to 
     both point clouds, computes their centroids, and calculates a translation 
