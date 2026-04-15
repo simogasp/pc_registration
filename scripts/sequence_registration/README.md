@@ -4,6 +4,100 @@ This directory contains scripts for processing, registering, and fusing sequenti
 
 ## Scripts
 
+### validate_ground_truth.py
+
+**Purpose:** Validates ground truth transformations by comparing them with ICP registration results.
+
+**Key Features:**
+
+- Performs pairwise ICP registration between scans at configurable intervals
+- Computes rotation error (degrees) and translation error (mm) vs ground truth
+- Generates comprehensive statistics (mean, median, std, min, max)
+- Optional JSON output with per-pair details
+
+**Usage:**
+
+```bash
+# Basic validation (consecutive scans)
+uv run ./validate_ground_truth.py --input data/scans
+
+# Validate with custom step interval (e.g., every 2nd scan)
+uv run ./validate_ground_truth.py --input data/scans --step 2
+
+# Save detailed results to JSON
+uv run ./validate_ground_truth.py --input data/scans --output validation_results.json
+
+# Without ground truth initialization (identity matrix)
+uv run ./validate_ground_truth.py --input data/scans --no-gt-init
+
+# Using Generalized ICP (GICP) instead of classic ICP
+uv run ./validate_ground_truth.py --input data/scans --use-gicp
+```
+
+**Parameters:**
+
+- `--input`: Directory containing `.ply` and `.json` scan pairs
+- `--voxel-size`: Voxel size (mm) for downsampling (default: 50.0)
+- `--max-correspondence-distance`: ICP correspondence distance (default: 150.0)
+- `--step`: Step size for selecting pairs (1=consecutive, 2=every other scan, etc.) (default: 1)
+- `--no-gt-init`: Use identity initialization instead of ground truth
+- `--use-gicp`: Use Generalized ICP (GICP) instead of classic ICP for registration
+- `--output`: Optional JSON file for detailed results
+- `--log-level`: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) (default: INFO)
+- `--start-scan`: Index of first scan to process (0-based, inclusive)
+- `--end-scan`: Index of last scan to process (0-based, inclusive)
+
+---
+
+### fuse_scans.py
+
+**Purpose:** Simple fusion of multiple scans using ground truth transformations without optimization.
+
+**Key Features:**
+
+- Direct transformation and concatenation of scans using ground truth poses
+- Creates raw map (all points) and fused map (voxel downsampled)
+- Optional statistical outlier removal
+- Binary PLY output format
+- Saves execution parameters to `parameters.json` for reproducibility
+
+**Output Files:**
+
+- `raw_map.ply`: Binary PLY file with all transformed points concatenated
+- `fused_map.ply`: Binary PLY file with voxel downsampling applied
+- `parameters.json`: Execution parameters including timestamps and scan ranges
+
+**Usage:**
+
+```bash
+# Basic fusion
+uv run ./fuse_scans.py --input data/scans --output output/fused
+
+# With outlier removal
+uv run ./fuse_scans.py --input data/scans --output output/fused --remove-outliers
+
+# Only fused map (skip raw)
+uv run ./fuse_scans.py --input data/scans --output output/fused --skip-raw
+```
+
+**Parameters:**
+
+- `--input`: Directory containing `.ply` and `.json` scan pairs
+- `--output`: Output directory (default: output/fused_scans)
+- `--voxel-size`: Voxel size (mm) for fusion downsampling (default: 10.0)
+- `--skip-raw`: Skip saving raw concatenated map
+- `--skip-fused`: Skip saving fused map
+- `--remove-outliers`: Apply statistical outlier removal
+- `--outlier-nb-neighbors`: Number of neighbors for outlier detection (default: 20)
+- `--outlier-std-ratio`: Standard deviation ratio threshold (default: 2.0)
+- `--filter-distant`: Filter out points that are too far from the point cloud centroid
+- `--max-distance`: Maximum distance (mm) from centroid for filtering
+- `--distance-percentile`: Distance percentile threshold for filtering (default: 99.0)
+- `--start-scan`: Index of first scan to process (0-based, inclusive)
+- `--end-scan`: Index of last scan to process (0-based, inclusive)
+
+---
+
 ### multiway_registration.py
 
 **Purpose:** Performs multiway registration using pose graph optimization to align multiple sequential scans and create a fused map.
@@ -52,51 +146,6 @@ uv run ./multiway_registration.py --input data/scans --output output/multiway --
 - `--filter-distant`: Filter out points that are too far from the point cloud centroid
 - `--max-distance`: Maximum distance (mm) from centroid for filtering
 - `--distance-percentile`: Distance percentile threshold for filtering (default: 99.0)
-
----
-
-### validate_ground_truth.py
-
-**Purpose:** Validates ground truth transformations by comparing them with ICP registration results.
-
-**Key Features:**
-
-- Performs pairwise ICP registration between scans at configurable intervals
-- Computes rotation error (degrees) and translation error (mm) vs ground truth
-- Generates comprehensive statistics (mean, median, std, min, max)
-- Optional JSON output with per-pair details
-
-**Usage:**
-
-```bash
-# Basic validation (consecutive scans)
-uv run ./validate_ground_truth.py --input data/scans
-
-# Validate with custom step interval (e.g., every 2nd scan)
-uv run ./validate_ground_truth.py --input data/scans --step 2
-
-# Save detailed results to JSON
-uv run ./validate_ground_truth.py --input data/scans --output validation_results.json
-
-# Without ground truth initialization (identity matrix)
-uv run ./validate_ground_truth.py --input data/scans --no-gt-init
-
-# Using Generalized ICP (GICP) instead of classic ICP
-uv run ./validate_ground_truth.py --input data/scans --use-gicp
-```
-
-**Parameters:**
-
-- `--input`: Directory containing `.ply` and `.json` scan pairs
-- `--voxel-size`: Voxel size (mm) for downsampling (default: 50.0)
-- `--max-correspondence-distance`: ICP correspondence distance (default: 150.0)
-- `--step`: Step size for selecting pairs (1=consecutive, 2=every other scan, etc.) (default: 1)
-- `--no-gt-init`: Use identity initialization instead of ground truth
-- `--use-gicp`: Use Generalized ICP (GICP) instead of classic ICP for registration
-- `--output`: Optional JSON file for detailed results
-- `--log-level`: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) (default: INFO)
-- `--start-scan`: Index of first scan to process (0-based, inclusive)
-- `--end-scan`: Index of last scan to process (0-based, inclusive)
 
 ---
 
@@ -190,55 +239,6 @@ When `--output` is specified, the script creates:
 - **Localization Algorithm Testing**: Benchmark localization accuracy with/without initialization
 - **Ground Truth Validation**: Compare different ground truth sources (individual JSONs vs optimized poses)
 - **Subset Analysis**: Evaluate localization performance on specific scan ranges
-
----
-
-### fuse_scans.py
-
-**Purpose:** Simple fusion of multiple scans using ground truth transformations without optimization.
-
-**Key Features:**
-
-- Direct transformation and concatenation of scans using ground truth poses
-- Creates raw map (all points) and fused map (voxel downsampled)
-- Optional statistical outlier removal
-- Binary PLY output format
-- Saves execution parameters to `parameters.json` for reproducibility
-
-**Output Files:**
-
-- `raw_map.ply`: Binary PLY file with all transformed points concatenated
-- `fused_map.ply`: Binary PLY file with voxel downsampling applied
-- `parameters.json`: Execution parameters including timestamps and scan ranges
-
-**Usage:**
-
-```bash
-# Basic fusion
-uv run ./fuse_scans.py --input data/scans --output output/fused
-
-# With outlier removal
-uv run ./fuse_scans.py --input data/scans --output output/fused --remove-outliers
-
-# Only fused map (skip raw)
-uv run ./fuse_scans.py --input data/scans --output output/fused --skip-raw
-```
-
-**Parameters:**
-
-- `--input`: Directory containing `.ply` and `.json` scan pairs
-- `--output`: Output directory (default: output/fused_scans)
-- `--voxel-size`: Voxel size (mm) for fusion downsampling (default: 10.0)
-- `--skip-raw`: Skip saving raw concatenated map
-- `--skip-fused`: Skip saving fused map
-- `--remove-outliers`: Apply statistical outlier removal
-- `--outlier-nb-neighbors`: Number of neighbors for outlier detection (default: 20)
-- `--outlier-std-ratio`: Standard deviation ratio threshold (default: 2.0)
-- `--filter-distant`: Filter out points that are too far from the point cloud centroid
-- `--max-distance`: Maximum distance (mm) from centroid for filtering
-- `--distance-percentile`: Distance percentile threshold for filtering (default: 99.0)
-- `--start-scan`: Index of first scan to process (0-based, inclusive)
-- `--end-scan`: Index of last scan to process (0-based, inclusive)
 
 ---
 
@@ -554,24 +554,10 @@ uv run ./visualize_sequence.py --input data/scans --start-scan 10 --end-scan 50
 
 ## Workflow Recommendations
 
-### For High-Quality Maps
-
-1. **Validate ground truth** (if available):
-
-   ```bash
-   uv run ./validate_ground_truth.py --input data/scans --output validation.json
-   ```
-
-2. **Run multiway registration** with optimization:
-
-   ```bash
-   uv run ./multiway_registration.py --input data/scans --output output/optimized
-   ```
-
-### For Quick Preview
+### To create a gloabal map
 
 ```bash
-uv run ./fuse_scans.py --input data/scans --output output/quick_preview --skip-raw
+uv run ./fuse_scans.py --input data/dataset_real_lidar/ --output output/sequence_registration/fuse/filtered_distance_full --filter-distant --distance-percentile 99.999
 ```
 
 ### For Visualizing Scan Sequence
@@ -595,7 +581,7 @@ Evaluate how well individual scans can be localized against a global map:
 
 ```bash
 # 1. Create a global map using multiway registration
-uv run ./multiway_registration.py --input data/scans --output output/map_optimized
+ uv run ./fuse_scans.py --input data/dataset_real_lidar/ --output output/sequence_registration/fuse/filtered_distance_full --filter-distant --distance-percentile 99.999
 
 # 2. Test localization against the map (RANSAC only)
 uv run ./localize_against_map.py --input data/scans --map output/map_optimized/fused_map_optimized.ply --output output/localization_ransac.json
@@ -620,7 +606,8 @@ Compare localization performance across different methods (RANSAC, RANSAC+ICP, R
 
 ```bash
 # 1. Create a global map
-uv run ./multiway_registration.py --input data/scans --output output/map_optimized
+uv run ./fuse_scans.py --input data/dataset_real_lidar/ --output output/sequence_registration/fuse/filtered_distance_full --filter-distant --distance-percentile 99.999
+
 
 # 2. Run localization with different configurations
 # For each voxel size (50, 100, 150, 200, 300, 450), run:
