@@ -535,13 +535,17 @@ if __name__ == "__main__":
         "--max-rot-err",
         type=float,
         default=2,
-        help="Rotation error threshold (degrees) for the success rate plots. A scan is counted as successful when both its rotation and translation errors are below their respective thresholds. If not set, success rate plots are skipped.",
+        help="Rotation error threshold (degrees) for the success rate plots. "
+             "A scan is counted as successful when both its rotation and translation errors are below their respective thresholds. "
+             "If not set, success rate plots are skipped.",
     )
     parser.add_argument(
         "--max-transl-err",
         type=float,
         default=200,
-        help="Translation error threshold (mm) for the success rate plots. A scan is counted as successful when both its rotation and translation errors are below their respective thresholds. If not set, success rate plots are skipped.",
+        help="Translation error threshold (mm) for the success rate plots. "
+             "A scan is counted as successful when both its rotation and translation errors are below their respective thresholds. "
+             "If not set, success rate plots are skipped.",
     )
     parser.add_argument(
         "--log-level",
