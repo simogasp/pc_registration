@@ -1,0 +1,12 @@
+{
+  "semantic_classes": {
+    "0": "unlabeled",
+    "1": "wall",
+    "2": "window",
+    "3": "rivet",
+    "4": "stiffener",
+    "5": "post",
+    "6": "ceiling",
+    "7": "floor"
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/primitives.schema.json",
+  "title": "Geometric Primitives",
+  "description": "Schema for geometric primitives fitted to point cloud data",
+  "type": "object",
+  "required": ["primitives"],
+  "properties": {
+    "primitives": {
+      "type": "array",
+      "description": "Array of geometric primitives",
+      "items": {
+        "$ref": "#/definitions/primitive"
+      }
+    }
+  },
+  "definitions": {
+    "primitive": {
+      "oneOf": [
+        {
+          "allOf": [
+            {
+              "type": "object",
+              "required": ["id", "type"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Unique identifier for the primitive",
+                  "minimum": 0
+                },
+                "type": {
+                  "const": "plane"
+                }
+              }
+            },
+            {
+              "$ref": "#/definitions/plane"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "type": "object",
+              "required": ["id", "type"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Unique identifier for the primitive",
+                  "minimum": 0
+                },
+                "type": {
+                  "const": "cylinder"
+                }
+              }
+            },
+            {
+              "$ref": "#/definitions/cylinder"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "type": "object",
+              "required": ["id", "type"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Unique identifier for the primitive",
+                  "minimum": 0
+                },
+                "type": {
+                  "const": "sphere"
+                }
+              }
+            },
+            {
+              "$ref": "#/definitions/sphere"
+            }
+          ]
+        }
+      ]
+    },
+    "plane": {
+      "type": "object",
+      "required": ["equation", "obb"],
+      "properties": {
+        "equation": {
+          "type": "array",
+          "description": "Plane equation coefficients [a, b, c, d] where ax + by + cz + d = 0",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "obb": {
+          "$ref": "#/definitions/obb"
+        }
+      }
+    },
+    "cylinder": {
+      "type": "object",
+      "required": ["center", "axis", "radius", "obb"],
+      "properties": {
+        "center": {
+          "$ref": "#/definitions/point3d",
+          "description": "Center point of the cylinder"
+        },
+        "axis": {
+          "$ref": "#/definitions/vector3d",
+          "description": "Unit vector defining the cylinder axis direction"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Radius of the cylinder",
+          "minimum": 0,
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "description": "Height of the cylinder (optional)",
+          "minimum": 0,
+          "exclusiveMinimum": 0
+        },
+        "obb": {
+          "$ref": "#/definitions/obb"
+        }
+      }
+    },
+    "sphere": {
+      "type": "object",
+      "required": ["center", "radius", "obb"],
+      "properties": {
+        "center": {
+          "$ref": "#/definitions/point3d",
+          "description": "Center point of the sphere"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Radius of the sphere",
+          "minimum": 0,
+          "exclusiveMinimum": 0
+        },
+        "obb": {
+          "$ref": "#/definitions/obb"
+        }
+      }
+    },
+    "obb": {
+      "type": "object",
+      "description": "Oriented Bounding Box",
+      "required": ["center", "axes", "extents"],
+      "properties": {
+        "center": {
+          "$ref": "#/definitions/point3d",
+          "description": "Center point of the bounding box"
+        },
+        "axes": {
+          "type": "array",
+          "description": "Three orthogonal unit vectors defining box orientation",
+          "items": {
+            "$ref": "#/definitions/vector3d"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "extents": {
+          "type": "array",
+          "description": "Extents (dimensions) along each axis [width, height, depth]",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "point3d": {
+      "type": "array",
+      "description": "3D point coordinates [x, y, z]",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "vector3d": {
+      "type": "array",
+      "description": "3D vector [x, y, z]",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    }
+  }
+}
