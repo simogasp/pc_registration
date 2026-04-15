@@ -182,12 +182,12 @@ def execute_global_registration(
         f"Since the downsampling voxel size is {voxel_size:.3f}, we use a liberal distance threshold {distance_threshold:.3f}"
     )
     result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
-        source_down,
-        target_down,
-        source_fpfh,
-        target_fpfh,
+        source=source_down,
+        target=target_down,
+        source_feature=source_fpfh,
+        target_feature=target_fpfh,
         mutual_filter=True,
-        distance_threshold=distance_threshold,
+        max_correspondence_distance=distance_threshold,
         estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(
             False
         ),
@@ -335,25 +335,26 @@ def main(args: argparse.Namespace):
     )
 
     trans_init[:3, :3] = generate_random_rotation_matrix()
-    # trans_init = np.eye(4)
+    trans_init = np.eye(4)
 
     # supposing that we know an estimation of the gravity vector (e.g. along the y-axis/up vector)
     # we can try to use it to align the point clouds so that y-axis is aligned
     # here we use the y vector of the initial transformation and perturb it a bit to simulate the
     # direction of the gravity
+
     idx_gravity_axis = 1
 
-    gravity_transform = gravity_transformation(
-        trans_init[:3, idx_gravity_axis], gravity_axis=idx_gravity_axis
-    )
-    trans_init = gravity_transform @ trans_init
+    # gravity_transform = gravity_transformation(
+    #     trans_init[:3, idx_gravity_axis], gravity_axis=idx_gravity_axis
+    # )
+    # trans_init = gravity_transform @ trans_init
 
-    trans_init = (
-        align_centers_from_files(args.source, args.target, trans_init, correction)
-        @ trans_init
-    )
+    # trans_init = (
+    #     align_centers_from_files(args.source, args.target, trans_init, correction)
+    #     @ trans_init
+    # )
 
-    logger.debug(f"axis aligned:\n{trans_init @ np.eye(4)[:, idx_gravity_axis]}")
+    # logger.debug(f"axis aligned:\n{trans_init @ np.eye(4)[:, idx_gravity_axis]}")
 
     source, target, source_down, target_down, source_fpfh, target_fpfh = (
         prepare_dataset(args.source, args.target, voxel_size, trans_init, correction)
