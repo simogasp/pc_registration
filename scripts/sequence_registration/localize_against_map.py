@@ -16,9 +16,10 @@ import sys
 import argparse
 import json
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 import numpy as np
 import open3d as o3d
 
@@ -165,6 +166,25 @@ def save_parameters(params: dict, output_path: Path):
     logger.info(f"Saved execution parameters to {output_path.name}")
 
 
+def compute_stats(values: List[float]) -> dict:
+    """Compute summary statistics for a list of numeric values.
+
+    Args:
+        values: List of numeric values to summarise.
+
+    Returns:
+        Dictionary with keys: mean, median, std, min, max.
+    """
+    arr = np.array(values)
+    return {
+        "mean": float(np.mean(arr)),
+        "median": float(np.median(arr)),
+        "std": float(np.std(arr)),
+        "min": float(np.min(arr)),
+        "max": float(np.max(arr)),
+    }
+
+
 def _needs_separate_refinement_clouds(
     refinement_voxel_size: Optional[float],
     ransac_voxel_size: float,
@@ -260,6 +280,8 @@ def process_single_scan(
     logger.info(f"\nScan {scan_idx}/{end_idx}: {ply_path.stem}")
     logger.info("-" * 80)
 
+    t_total_start = time.perf_counter()
+
     # Load scan at RANSAC resolution
     logger.info(f"Loading scan: {ply_path.stem}")
     scan_ransac = load_point_cloud(ply_path, voxel_size=voxel_size)
@@ -272,20 +294,25 @@ def process_single_scan(
         H_gt = load_transformation_matrix(json_path)
 
     # Perform global localization using RANSAC, or use a pre-estimated pose
+    time_ransac_s: Optional[float] = None
     if estimated_pose is not None:
         logger.info("Using pre-estimated pose (skipping RANSAC global registration)...")
         H_estimated = estimated_pose
         reg_result = None
     else:
         logger.info("Localizing scan against map with RANSAC...")
+        t_ransac_start = time.perf_counter()
         H_estimated, reg_result = global_localize_scan_to_map(
             scan_ransac,
             global_map,
             voxel_size=voxel_size,
             max_correspondence_distance=max_correspondence_distance,
         )
+        time_ransac_s = time.perf_counter() - t_ransac_start
+        logger.debug(f"    RANSAC took {time_ransac_s:.3f} s")
 
     # Optionally refine the pose using ICP or GICP
+    time_refinement_s: Optional[float] = None
     if refine_poses:
         refinement_name = "GICP" if use_gicp else "ICP"
         scan_refine = _load_scan_for_refinement(
@@ -303,6 +330,7 @@ def process_single_scan(
             logger.info(
                 f"Refining pose with {refinement_name} (reusing RANSAC clouds)..."
             )
+        t_refine_start = time.perf_counter()
         H_estimated, icp_result = pairwise_registration(
             source=scan_refine,
             target=map_refine,
@@ -312,6 +340,8 @@ def process_single_scan(
             verbose=True,
             use_generalized_icp=use_gicp,
         )
+        time_refinement_s = time.perf_counter() - t_refine_start
+        logger.debug(f"    Refinement took {time_refinement_s:.3f} s")
         # Update registration result to include refinement statistics
         reg_result = icp_result
 
@@ -335,6 +365,14 @@ def process_single_scan(
     logger.info(f"    Rotation error:    {rot_error:.4f}°")
     logger.info(f"    Translation error: {trans_error:.4f} mm")
 
+    time_total_s = time.perf_counter() - t_total_start
+    logger.info("Timing:")
+    if time_ransac_s is not None:
+        logger.info(f"    RANSAC:      {time_ransac_s:.3f} s")
+    if time_refinement_s is not None:
+        logger.info(f"    Refinement:  {time_refinement_s:.3f} s")
+    logger.info(f"    Total:       {time_total_s:.3f} s")
+
     # Create result entry for JSON output
     localization_stats = (
         {
@@ -344,6 +382,11 @@ def process_single_scan(
         if reg_result is not None
         else {}
     )
+    timing = {
+        "total_s": time_total_s,
+        "ransac_s": time_ransac_s,
+        "refinement_s": time_refinement_s,
+    }
     result_entry = {
         "scan_index": scan_idx,
         "scan_name": ply_path.stem,
@@ -352,6 +395,7 @@ def process_single_scan(
             "rotation_degrees": float(rot_error),
             "translation_mm": float(trans_error),
         },
+        "timing": timing,
         "ground_truth_pose": H_gt.tolist(),
         "estimated_pose": H_estimated.tolist(),
     }
@@ -361,6 +405,9 @@ def process_single_scan(
         "translation_error": trans_error,
         "fitness": reg_result.fitness if reg_result is not None else float("nan"),
         "rmse": reg_result.inlier_rmse if reg_result is not None else float("nan"),
+        "time_total_s": time_total_s,
+        "time_ransac_s": time_ransac_s,
+        "time_refinement_s": time_refinement_s,
         "result_entry": result_entry,
     }
 
@@ -561,6 +608,9 @@ def localize_scans(
     translation_errors_mm = []
     fitness_scores = []
     rmse_values = []
+    times_total_s = []
+    times_ransac_s = []
+    times_refinement_s = []
     results = []
 
     # Process each scan
@@ -592,6 +642,11 @@ def localize_scans(
         translation_errors_mm.append(result["translation_error"])
         fitness_scores.append(result["fitness"])
         rmse_values.append(result["rmse"])
+        times_total_s.append(result["time_total_s"])
+        if result["time_ransac_s"] is not None:
+            times_ransac_s.append(result["time_ransac_s"])
+        if result["time_refinement_s"] is not None:
+            times_refinement_s.append(result["time_refinement_s"])
         results.append(result["result_entry"])
 
     # Compute summary statistics
@@ -599,33 +654,24 @@ def localize_scans(
     logger.info("SUMMARY STATISTICS")
     logger.info("=" * 80)
 
-    logger.info("Rotation Error (degrees):")
-    logger.info(f"  Mean:   {np.mean(rotation_errors):.4f}°")
-    logger.info(f"  Median: {np.median(rotation_errors):.4f}°")
-    logger.info(f"  Std:    {np.std(rotation_errors):.4f}°")
-    logger.info(f"  Min:    {np.min(rotation_errors):.4f}°")
-    logger.info(f"  Max:    {np.max(rotation_errors):.4f}°")
+    def _log_stats(label: str, stats: dict, unit: str = "") -> None:
+        suffix = f" {unit}" if unit else ""
+        logger.info(f"{label}:")
+        logger.info(f"  Mean:   {stats['mean']:.4f}{suffix}")
+        logger.info(f"  Median: {stats['median']:.4f}{suffix}")
+        logger.info(f"  Std:    {stats['std']:.4f}{suffix}")
+        logger.info(f"  Min:    {stats['min']:.4f}{suffix}")
+        logger.info(f"  Max:    {stats['max']:.4f}{suffix}")
 
-    logger.info("Translation Error (mm):")
-    logger.info(f"  Mean:   {np.mean(translation_errors_mm):.4f} mm")
-    logger.info(f"  Median: {np.median(translation_errors_mm):.4f} mm")
-    logger.info(f"  Std:    {np.std(translation_errors_mm):.4f} mm")
-    logger.info(f"  Min:    {np.min(translation_errors_mm):.4f} mm")
-    logger.info(f"  Max:    {np.max(translation_errors_mm):.4f} mm")
-
-    logger.info("Localization Fitness:")
-    logger.info(f"  Mean:   {np.mean(fitness_scores):.4f}")
-    logger.info(f"  Median: {np.median(fitness_scores):.4f}")
-    logger.info(f"  Std:    {np.std(fitness_scores):.4f}")
-    logger.info(f"  Min:    {np.min(fitness_scores):.4f}")
-    logger.info(f"  Max:    {np.max(fitness_scores):.4f}")
-
-    logger.info("Localization RMSE (mm):")
-    logger.info(f"  Mean:   {np.mean(rmse_values):.4f} mm")
-    logger.info(f"  Median: {np.median(rmse_values):.4f} mm")
-    logger.info(f"  Std:    {np.std(rmse_values):.4f} mm")
-    logger.info(f"  Min:    {np.min(rmse_values):.4f} mm")
-    logger.info(f"  Max:    {np.max(rmse_values):.4f} mm")
+    _log_stats("Rotation Error", compute_stats(rotation_errors), "°")
+    _log_stats("Translation Error", compute_stats(translation_errors_mm), "mm")
+    _log_stats("Localization Fitness", compute_stats(fitness_scores))
+    _log_stats("Localization RMSE", compute_stats(rmse_values), "mm")
+    _log_stats("Total time per scan", compute_stats(times_total_s), "s")
+    if times_ransac_s:
+        _log_stats("RANSAC time per scan", compute_stats(times_ransac_s), "s")
+    if times_refinement_s:
+        _log_stats("Refinement time per scan", compute_stats(times_refinement_s), "s")
 
     # Save results to JSON
     if output_file:
@@ -654,33 +700,14 @@ def localize_scans(
                 "method": method_str,
             },
             "statistics": {
-                "rotation_error_degrees": {
-                    "mean": float(np.mean(rotation_errors)),
-                    "median": float(np.median(rotation_errors)),
-                    "std": float(np.std(rotation_errors)),
-                    "min": float(np.min(rotation_errors)),
-                    "max": float(np.max(rotation_errors)),
-                },
-                "translation_error_mm": {
-                    "mean": float(np.mean(translation_errors_mm)),
-                    "median": float(np.median(translation_errors_mm)),
-                    "std": float(np.std(translation_errors_mm)),
-                    "min": float(np.min(translation_errors_mm)),
-                    "max": float(np.max(translation_errors_mm)),
-                },
-                "fitness": {
-                    "mean": float(np.mean(fitness_scores)),
-                    "median": float(np.median(fitness_scores)),
-                    "std": float(np.std(fitness_scores)),
-                    "min": float(np.min(fitness_scores)),
-                    "max": float(np.max(fitness_scores)),
-                },
-                "inlier_rmse_mm": {
-                    "mean": float(np.mean(rmse_values)),
-                    "median": float(np.median(rmse_values)),
-                    "std": float(np.std(rmse_values)),
-                    "min": float(np.min(rmse_values)),
-                    "max": float(np.max(rmse_values)),
+                "rotation_error_degrees": compute_stats(rotation_errors),
+                "translation_error_mm": compute_stats(translation_errors_mm),
+                "fitness": compute_stats(fitness_scores),
+                "inlier_rmse_mm": compute_stats(rmse_values),
+                "timing": {
+                    "total_s": compute_stats(times_total_s),
+                    "ransac_s": compute_stats(times_ransac_s) if times_ransac_s else None,
+                    "refinement_s": compute_stats(times_refinement_s) if times_refinement_s else None,
                 },
             },
             "num_scans": num_scans,
