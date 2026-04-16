@@ -189,6 +189,7 @@ def fuse_scans(
     distance_percentile: float = 99.0,
     start_scan: Optional[int] = None,
     end_scan: Optional[int] = None,
+    step: int = 1,
 ):
     """Main function to fuse multiple scans into map files.
 
@@ -206,6 +207,7 @@ def fuse_scans(
         distance_percentile: Distance percentile threshold (default: 99.0).
         start_scan: Index of first scan to process (0-based, inclusive). None = start from 0.
         end_scan: Index of last scan to process (0-based, inclusive). None = process until end.
+        step: Process every nth scan within the selected range (default: 1 = all scans).
     """
     data_path = Path(data_dir)
     output_path = Path(output_dir)
@@ -241,12 +243,16 @@ def fuse_scans(
     if start_idx > end_idx:
         raise ValueError(f"start_scan ({start_idx}) must be <= end_scan ({end_idx})")
 
-    # Slice pairs (inclusive range)
-    pairs = pairs[start_idx : end_idx + 1]
+    if step < 1:
+        raise ValueError(f"step must be >= 1, got {step}")
+
+    # Slice pairs: inclusive range, then apply step
+    pairs = pairs[start_idx : end_idx + 1 : step]
     num_scans = len(pairs)
 
     logger.info(
-        f"Processing scans {start_idx} to {end_idx} (inclusive) - {num_scans} scans out of {total_scans} total"
+        f"Processing scans {start_idx} to {end_idx} (step={step}) - "
+        f"{num_scans} scans out of {total_scans} total"
     )
 
     # Save execution parameters
@@ -265,6 +271,7 @@ def fuse_scans(
         "distance_percentile": distance_percentile,
         "start_scan_requested": start_scan,
         "end_scan_requested": end_scan,
+        "step": step,
         "start_scan_actual": start_idx,
         "end_scan_actual": end_idx,
         "total_scans_available": total_scans,
@@ -424,6 +431,13 @@ def main():
         help="Index of last scan to process (0-based, inclusive)",
     )
 
+    parser.add_argument(
+        "--step",
+        type=int,
+        default=1,
+        help="Process every nth scan within the selected range (default: 1 = all scans)",
+    )
+
     args = parser.parse_args()
 
     # Setup logging
@@ -444,6 +458,7 @@ def main():
             distance_percentile=args.distance_percentile,
             start_scan=args.start_scan,
             end_scan=args.end_scan,
+            step=args.step,
         )
     except Exception as e:
         logger.error(f"Error: {e}")

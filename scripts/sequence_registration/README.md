@@ -58,6 +58,7 @@ uv run ./validate_ground_truth.py --input data/scans --use-gicp
 - Direct transformation and concatenation of scans using ground truth poses
 - Creates raw map (all points) and fused map (voxel downsampled)
 - Optional statistical outlier removal
+- Configurable scan stride to fuse every nth scan
 - Binary PLY output format
 - Saves execution parameters to `parameters.json` for reproducibility
 
@@ -78,6 +79,9 @@ uv run ./fuse_scans.py --input data/scans --output output/fused --remove-outlier
 
 # Only fused map (skip raw)
 uv run ./fuse_scans.py --input data/scans --output output/fused --skip-raw
+
+# Fuse every 5th scan (faster, lower density)
+uv run ./fuse_scans.py --input data/scans --output output/fused --step 5
 ```
 
 **Parameters:**
@@ -95,6 +99,7 @@ uv run ./fuse_scans.py --input data/scans --output output/fused --skip-raw
 - `--distance-percentile`: Distance percentile threshold for filtering (default: 99.0)
 - `--start-scan`: Index of first scan to process (0-based, inclusive)
 - `--end-scan`: Index of last scan to process (0-based, inclusive)
+- `--step`: Process every nth scan within the selected range (default: 1 = all scans). For example, `--step 5` fuses scans 0, 5, 10, 15, ...
 
 ---
 
