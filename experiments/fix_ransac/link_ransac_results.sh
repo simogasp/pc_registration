@@ -36,4 +36,7 @@ for REF_VOXEL_SIZE in "${REF_VOXEL_SIZES[@]}"; do
         --output "${COMPARISON_DIR}/comparison_plots"
 done
 
+echo "Generating final reports..."
+uv run python scripts/sequence_registration/generate_localization_report.py   --input ${ROOT_DIR}
+
 echo "Done"

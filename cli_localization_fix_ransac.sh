@@ -121,3 +121,10 @@ echo ""
 echo "========================================"
 echo "All configurations completed!"
 echo "========================================"
+
+echo ""
+echo "========================================"
+echo "Generating final reports..."
+echo "========================================"
+
+uv run python scripts/sequence_registration/generate_localization_report.py   --input ${ROOT_DIR}
