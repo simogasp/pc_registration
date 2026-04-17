@@ -37,8 +37,10 @@ output/sequence_registration/localization/comparison/comparison_fix_ransac/
 
 | File | Purpose |
 | --- | --- |
-| `config.sh` | Single source of truth for all parameters. Edit only this file. |
-| `submit.sh` | Entry point: submits all SLURM phases with correct dependencies. |
+| `config.sh` | Dispatcher: sources the file named by `CONFIG_FILE` (default: `config_defaults.sh`). |
+| `config_defaults.sh` | Default parameters (voxel sizes, methods, paths, scan range). Edit to change defaults. |
+| `config_step10.sh` | Example variant: same as defaults but `STEP=10` and a separate output directory. |
+| `submit.sh` | Entry point: submits all SLURM phases with correct dependencies. Accepts `--config`. |
 | `slurm_ransac.sh` | SLURM worker — phase 1: RANSAC global registration. |
 | `slurm_refinement.sh` | SLURM worker — phase 2: ICP/GICP refinement. |
 | `slurm_link_ransac.sh` | SLURM worker — phase 3: symlinks + comparison plots. |
@@ -49,7 +51,11 @@ output/sequence_registration/localization/comparison/comparison_fix_ransac/
 From the repository root:
 
 ```bash
+# Default configuration
 bash experiments/fix_ransac/submit.sh
+
+# Custom configuration variant
+bash experiments/fix_ransac/submit.sh --config config_step10.sh
 ```
 
 This submits three job phases with automatic dependencies:
@@ -70,17 +76,36 @@ After it finishes, replace the `cp -r` symlinks with actual symlinks and
 re-generate comparison plots:
 
 ```bash
+# Default configuration
 bash experiments/fix_ransac/link_ransac_results.sh
+
+# Custom configuration variant
+CONFIG_FILE=config_step10.sh bash experiments/fix_ransac/link_ransac_results.sh
 ```
 
-## Modifying the experiment
+## Configuration variants
 
-Edit `experiments/fix_ransac/config.sh`. All scripts source it automatically.
+Parameters are split across two layers:
 
-For example, to add voxel size 600 mm:
+- **`config_defaults.sh`** — all parameters with their default values.  Edit
+  this file to change defaults that apply to every run.
+- **Variant files** (e.g. `config_step10.sh`) — source `config_defaults.sh`
+  and then override only the parameters that differ.  Create a new file for
+  each logical variation of the experiment.
+
+Pass the variant to `submit.sh` via `--config <filename>`.  The filename is
+exported as `CONFIG_FILE` and picked up automatically by every SLURM worker
+through `config.sh`.
+
+To create a new variant (e.g. fewer voxel sizes):
 
 ```bash
-VOXEL_SIZES=(50 100 150 200 300 450 600)
+cp experiments/fix_ransac/config_step10.sh experiments/fix_ransac/config_small.sh
+# edit config_small.sh: change VOXEL_SIZES, ROOT_DIR, etc.
+bash experiments/fix_ransac/submit.sh --config config_small.sh
 ```
 
-No other file needs to be changed.
+## Modifying the defaults
+
+Edit `experiments/fix_ransac/config_defaults.sh`.  All scripts pick up changes
+automatically on the next run.  No other file needs to be changed.

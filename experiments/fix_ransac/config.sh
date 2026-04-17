@@ -1,22 +1,13 @@
 #!/bin/bash
-# Shared configuration for localization comparison scripts.
-# All SLURM scripts and helper scripts source this file.
+# Configuration dispatcher for the fix_ransac experiment.
+# All SLURM workers and helper scripts source this file.
 #
-# Edit ONLY this file when changing parameters (e.g. adding a voxel size).
-# Changes are automatically picked up by all scripts.
+# By default, config_defaults.sh is loaded.  To use a different configuration,
+# export CONFIG_FILE=<filename> before sourcing this file, or pass --config to
+# submit.sh, which sets and exports CONFIG_FILE automatically.
+#
+# Example:
+#   CONFIG_FILE=config_step10.sh bash experiments/fix_ransac/link_ransac_results.sh
 
-VOXEL_SIZES=(50 100 150 200 300 450)
-METHODS=(ransac_icp ransac_gicp)
-REF_VOXEL_SIZES=(10 20 50)
-
-INPUT_DIR="data/dataset_real_lidar"
-MAP_FILE="output/sequence_registration/fuse/filtered_distance_full/fused_map.ply"
-ICP_REFINEMENT_DISTANCE=50.0
-
-ROOT_DIR="output/sequence_registration/localization/comparison/comparison_fix_ransac"
-RANSAC_BASE_DIR="${ROOT_DIR}/ransac_base"
-
-# params for the subset of scans to process
-START_SCAN=0
-END_SCAN=379
-STEP=1
+_CONFIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${_CONFIG_DIR}/${CONFIG_FILE:-config_defaults.sh}"

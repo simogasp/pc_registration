@@ -14,6 +14,23 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Parse optional --config <file> argument (default: config_defaults.sh).
+CONFIG_FILE="config_defaults.sh"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --config)
+            CONFIG_FILE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+export CONFIG_FILE
+
 source "${SCRIPT_DIR}/config.sh"
 
 mkdir -p logs
@@ -34,14 +51,14 @@ for VOXEL_IDX in $(seq 0 $((N_VOXEL - 1))); do
     VOXEL_SIZE=${VOXEL_SIZES[$VOXEL_IDX]}
 
     RANSAC_JOB=$(sbatch --parsable --array=${VOXEL_IDX} \
-        --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}" \
+        --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}",CONFIG_FILE="${CONFIG_FILE}" \
         "${SCRIPT_DIR}/slurm_ransac.sh")
     echo "Submitted RANSAC voxel=${VOXEL_SIZE}: job ${RANSAC_JOB} (task ${VOXEL_IDX})"
 
     START=$((VOXEL_IDX * N_REFINE_PER_VOXEL))
     END=$((START + N_REFINE_PER_VOXEL - 1))
     REFINE_JOB=$(sbatch --parsable --array=${START}-${END} \
-        --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}" \
+        --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}",CONFIG_FILE="${CONFIG_FILE}" \
         --dependency=afterok:${RANSAC_JOB} "${SCRIPT_DIR}/slurm_refinement.sh")
     echo "Submitted refinement voxel=${VOXEL_SIZE}: job ${REFINE_JOB} (tasks ${START}-${END})"
 
@@ -51,7 +68,7 @@ done
 # The symlink phase waits for every refinement job to succeed.
 REFINE_DEP=$(IFS=:; echo "${REFINE_JOBS[*]}")
 LINK_JOB=$(sbatch --parsable --dependency=afterok:${REFINE_DEP} \
-    --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}" \
+    --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}",CONFIG_FILE="${CONFIG_FILE}" \
     "${SCRIPT_DIR}/slurm_link_ransac.sh")
 echo ""
 echo "Submitted symlink phase: job ${LINK_JOB} (depends on all refinement jobs)"
