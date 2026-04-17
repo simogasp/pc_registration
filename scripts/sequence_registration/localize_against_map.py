@@ -706,8 +706,12 @@ def localize_scans(
                 "inlier_rmse_mm": compute_stats(rmse_values),
                 "timing": {
                     "total_s": compute_stats(times_total_s),
-                    "ransac_s": compute_stats(times_ransac_s) if times_ransac_s else None,
-                    "refinement_s": compute_stats(times_refinement_s) if times_refinement_s else None,
+                    "ransac_s": compute_stats(times_ransac_s)
+                    if times_ransac_s
+                    else None,
+                    "refinement_s": compute_stats(times_refinement_s)
+                    if times_refinement_s
+                    else None,
                 },
             },
             "num_scans": num_scans,
