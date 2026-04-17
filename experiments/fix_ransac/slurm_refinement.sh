@@ -57,6 +57,9 @@ CMD="uv run ./scripts/sequence_registration/localize_against_map.py \
     --output ${OUTPUT_DIR}/localization_results.json \
     --voxel-size ${VOXEL_SIZE} \
     --estimated-poses ${RANSAC_DIR}/estimated_poses.json \
+    --start-scan ${START_SCAN} \
+    --end-scan ${END_SCAN} \
+    --step ${STEP} \
     --refine-poses \
     --refinement-voxel-size ${REF_VOXEL_SIZE} \
     --icp-refinement-distance ${ICP_REFINEMENT_DISTANCE}"

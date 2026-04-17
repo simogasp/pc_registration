@@ -35,6 +35,9 @@ uv run ./scripts/sequence_registration/localize_against_map.py \
     --input "${INPUT_DIR}" \
     --map "${MAP_FILE}" \
     --output "${OUTPUT_DIR}/localization_results.json" \
+    --start-scan ${START_SCAN} \
+    --end-scan ${END_SCAN} \
+    --step ${STEP} \
     --voxel-size "${VOXEL_SIZE}" \
     > "${LOG_FILE}"
 

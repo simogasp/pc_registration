@@ -15,3 +15,8 @@ ICP_REFINEMENT_DISTANCE=50.0
 
 ROOT_DIR="output/sequence_registration/localization/comparison/comparison_fix_ransac"
 RANSAC_BASE_DIR="${ROOT_DIR}/ransac_base"
+
+# params for the subset of scans to process
+START_SCAN=0
+END_SCAN=379
+STEP=1
