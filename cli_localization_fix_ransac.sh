@@ -17,26 +17,26 @@ REF_VOXEL_SIZES=(10 20 50)
 # REF_VOXEL_SIZES=(75 100 150 175 200 250 300)
 RANSAC_BASE_DIR="${ROOT_DIR}/ransac_base"
 
-# # Run RANSAC once per voxel size (independent of refinement voxel size)
-# echo "========================================"
-# echo "Running RANSAC global registration"
-# echo "========================================"
+# Run RANSAC once per voxel size (independent of refinement voxel size)
+echo "========================================"
+echo "Running RANSAC global registration"
+echo "========================================"
 
-# for VOXEL_SIZE in "${VOXEL_SIZES[@]}"; do
-#     echo ""
-#     echo "  VOXEL_SIZE=$VOXEL_SIZE"
-#     OUTPUT_DIR="${RANSAC_BASE_DIR}/ransac_vs${VOXEL_SIZE}"
-#     LOG_FILE="${OUTPUT_DIR}/log.log"
-#     mkdir -p "${OUTPUT_DIR}"
-#     uv run ./scripts/sequence_registration/localize_against_map.py \
-#         --input "${INPUT}" \
-#         --map "${MAP}" \
-#         --output "${OUTPUT_DIR}/localization_results.json" \
-#         --voxel-size "${VOXEL_SIZE}" > "${LOG_FILE}"
-#     uv run ./scripts/sequence_registration/plot_localization_errors.py \
-#         --input "${OUTPUT_DIR}/localization_results.json" \
-#         --output "${OUTPUT_DIR}/plots"
-# done
+for VOXEL_SIZE in "${VOXEL_SIZES[@]}"; do
+    echo ""
+    echo "  VOXEL_SIZE=$VOXEL_SIZE"
+    OUTPUT_DIR="${RANSAC_BASE_DIR}/ransac_vs${VOXEL_SIZE}"
+    LOG_FILE="${OUTPUT_DIR}/log.log"
+    mkdir -p "${OUTPUT_DIR}"
+    uv run ./scripts/sequence_registration/localize_against_map.py \
+        --input "${INPUT}" \
+        --map "${MAP}" \
+        --output "${OUTPUT_DIR}/localization_results.json" \
+        --voxel-size "${VOXEL_SIZE}" > "${LOG_FILE}"
+    uv run ./scripts/sequence_registration/plot_localization_errors.py \
+        --input "${OUTPUT_DIR}/localization_results.json" \
+        --output "${OUTPUT_DIR}/plots"
+done
 
 # For each refinement voxel size, run ICP and GICP using the RANSAC poses as input
 for REF_VOXEL_SIZE in "${REF_VOXEL_SIZES[@]}"; do
