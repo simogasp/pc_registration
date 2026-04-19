@@ -449,6 +449,7 @@ def localize_scans(
     output_file: Optional[str] = None,
     start_scan: Optional[int] = None,
     end_scan: Optional[int] = None,
+    step: int = 1,
     poses_file: Optional[str] = None,
     refine_poses: bool = False,
     icp_refinement_distance: float = 50.0,
@@ -466,6 +467,7 @@ def localize_scans(
         output_file: Optional file to save results (JSON format).
         start_scan: Index of first scan (0-based, inclusive).
         end_scan: Index of last scan (0-based, inclusive).
+        step: Process every Nth scan within the range (1 = all scans).
         poses_file: Optional single file containing all ground truth poses.
         refine_poses: If True, refine the pose using ICP or GICP.
         icp_refinement_distance: Maximum correspondence distance for ICP refinement.
@@ -506,12 +508,14 @@ def localize_scans(
         )
     if start_idx > end_idx:
         raise ValueError(f"start_scan ({start_idx}) must be <= end_scan ({end_idx})")
+    if step < 1:
+        raise ValueError(f"step ({step}) must be >= 1")
 
-    pairs = pairs[start_idx : end_idx + 1]
+    pairs = pairs[start_idx : end_idx + 1 : step]
     num_scans = len(pairs)
 
     logger.info(
-        f"Processing scans {start_idx} to {end_idx} (inclusive) - "
+        f"Processing scans {start_idx} to {end_idx} (step={step}) - "
         f"{num_scans} scans out of {total_scans} total"
     )
 
@@ -570,6 +574,7 @@ def localize_scans(
             "estimated_poses_file": estimated_poses_file,
             "start_scan_requested": start_scan,
             "end_scan_requested": end_scan,
+            "step": step,
             "start_scan_actual": start_idx,
             "end_scan_actual": end_idx,
             "total_scans_available": total_scans,
@@ -792,6 +797,13 @@ def main():
     )
 
     parser.add_argument(
+        "--step",
+        type=int,
+        default=1,
+        help="Process every Nth scan within the selected range (1 = all scans)",
+    )
+
+    parser.add_argument(
         "--poses",
         "-p",
         default=None,
@@ -861,6 +873,7 @@ def main():
             output_file=args.output,
             start_scan=args.start_scan,
             end_scan=args.end_scan,
+            step=args.step,
             poses_file=args.poses,
             refine_poses=args.refine_poses,
             icp_refinement_distance=args.icp_refinement_distance,
