@@ -8,7 +8,7 @@
 
 VOXEL_SIZES=(50 100 150 200 300 450)
 METHODS=(ransac_icp ransac_gicp)
-REF_VOXEL_SIZES=(10 20 50)
+REF_VOXEL_SIZES=(10 20 50 75 100 150 175 200 250 300)
 
 INPUT_DIR="data/dataset_real_lidar"
 MAP_FILE="output/sequence_registration/fuse/filtered_distance_full/fused_map.ply"
