@@ -33,7 +33,12 @@ export CONFIG_FILE
 
 source "${SCRIPT_DIR}/config.sh"
 
-mkdir -p logs
+# Derive log directory from the experiment output name so that logs from
+# different config variants are kept separate.
+TIMESTAMP=$(date +"%Y%m%d%H%M")
+LOG_DIR="logs/$(basename "${ROOT_DIR}")_${TIMESTAMP}"
+mkdir -p "${LOG_DIR}"
+export LOG_DIR
 
 N_VOXEL=${#VOXEL_SIZES[@]}
 N_METHODS=${#METHODS[@]}
@@ -43,6 +48,7 @@ N_REFINE_PER_VOXEL=$((N_METHODS * N_REF))
 echo "Config: ${N_VOXEL} voxel sizes, ${N_METHODS} methods, ${N_REF} ref voxel sizes"
 echo "  RANSAC tasks: ${N_VOXEL} (one per voxel size)"
 echo "  Refinement tasks per voxel: ${N_REFINE_PER_VOXEL} (total: $((N_VOXEL * N_REFINE_PER_VOXEL)))"
+echo "  Log directory: ${LOG_DIR}"
 echo ""
 
 REFINE_JOBS=()
@@ -51,6 +57,8 @@ for VOXEL_IDX in $(seq 0 $((N_VOXEL - 1))); do
     VOXEL_SIZE=${VOXEL_SIZES[$VOXEL_IDX]}
 
     RANSAC_JOB=$(sbatch --parsable --array=${VOXEL_IDX} \
+        --output="${LOG_DIR}/%x_%A/%x_%A_%a.out" \
+        --error="${LOG_DIR}/%x_%A/%x_%A_%a.err" \
         --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}",CONFIG_FILE="${CONFIG_FILE}" \
         "${SCRIPT_DIR}/slurm_ransac.sh")
     echo "Submitted RANSAC voxel=${VOXEL_SIZE}: job ${RANSAC_JOB} (task ${VOXEL_IDX})"
@@ -58,6 +66,8 @@ for VOXEL_IDX in $(seq 0 $((N_VOXEL - 1))); do
     START=$((VOXEL_IDX * N_REFINE_PER_VOXEL))
     END=$((START + N_REFINE_PER_VOXEL - 1))
     REFINE_JOB=$(sbatch --parsable --array=${START}-${END} \
+        --output="${LOG_DIR}/%x_%A/%x_%A_%a.out" \
+        --error="${LOG_DIR}/%x_%A/%x_%A_%a.err" \
         --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}",CONFIG_FILE="${CONFIG_FILE}" \
         --dependency=afterok:${RANSAC_JOB} "${SCRIPT_DIR}/slurm_refinement.sh")
     echo "Submitted refinement voxel=${VOXEL_SIZE}: job ${REFINE_JOB} (tasks ${START}-${END})"
@@ -68,6 +78,8 @@ done
 # The symlink phase waits for every refinement job to succeed.
 REFINE_DEP=$(IFS=:; echo "${REFINE_JOBS[*]}")
 LINK_JOB=$(sbatch --parsable --dependency=afterok:${REFINE_DEP} \
+    --output="${LOG_DIR}/%x_%A.out" \
+    --error="${LOG_DIR}/%x_%A.err" \
     --export=ALL,EXPERIMENT_DIR="${SCRIPT_DIR}",CONFIG_FILE="${CONFIG_FILE}" \
     "${SCRIPT_DIR}/slurm_link_ransac.sh")
 echo ""
