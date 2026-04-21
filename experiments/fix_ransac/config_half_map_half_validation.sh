@@ -10,5 +10,7 @@ source "${_VARIANT_DIR}/config_defaults.sh"
 MAP_FILE="output/sequence_registration/fuse/filtered_distance_0-204/fused_map.ply"
 
 ROOT_DIR="output/sequence_registration/localization/comparison/comparison_fix_ransac_half_map_half_validation"
+RANSAC_BASE_DIR="${ROOT_DIR}/ransac_base"
+
 START_SCAN=205
 END_SCAN=379
