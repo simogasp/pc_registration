@@ -3,15 +3,22 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "registration"
+name = "pc_registration_benchmark"
+authors = [{ name = "Simone Gasparini", email = "simone.gasparini@gmail.com" }]
 version = "0.1.0"
+license = "MPL-2.0"
+license-files = ["LICEN[CS]E.*"]
 description = "Point cloud registration using Open3D"
 readme = "README.md"
+keywords = ["point cloud", "registration", "lidar"]
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2.3.4",
     "open3d>=0.19.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/simogasp/pc_registration"
 
 [dependency-groups]
 dev = [
