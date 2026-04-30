@@ -103,6 +103,43 @@ uv run ./fuse_scans.py --input data/scans --output output/fused --step 5
 
 ---
 
+### poses_txt_to_json.py
+
+**Purpose:** Convert a row-major flat-text poses file to per-scan JSON pose files compatible with all registration scripts.
+
+**Key Features:**
+
+- Reads a text file where each line holds 16 space-separated floats (one 4x4 matrix in row-major order)
+- Writes one numbered JSON file per line (`0.json`, `1.json`, ...) in the format expected by `registration_common.load_transformation_matrix`
+- Skips blank lines and `#` comment lines
+- Output directory defaults to the same directory as the input file
+
+**Usage:**
+
+```bash
+# Write JSON files alongside the poses file
+uv run ./poses_txt_to_json.py --input data/dataset_real_lidar/poses.txt
+
+# Write JSON files to a separate directory
+uv run ./poses_txt_to_json.py --input data/dataset_real_lidar/poses.txt --output-dir data/dataset_real_lidar/poses_json
+```
+
+**Parameters:**
+
+- `--input`: Path to the input poses text file
+- `--output-dir`: Directory where JSON files will be written (default: same directory as the input file)
+- `--log-level`: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) (default: INFO)
+
+**Input format:**
+
+Each non-empty, non-comment line must contain exactly 16 space-separated floats representing a 4x4 homogeneous transformation matrix in row-major order:
+
+```
+r00 r01 r02 tx  r10 r11 r12 ty  r20 r21 r22 tz  0 0 0 1
+```
+
+---
+
 ### multiway_registration.py
 
 **Purpose:** Performs multiway registration using pose graph optimization to align multiple sequential scans and create a fused map.

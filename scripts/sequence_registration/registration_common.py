@@ -80,6 +80,31 @@ def load_transformation_matrix(json_path: Path) -> np.ndarray:
     return H
 
 
+def matrix_to_json_dict(matrix: np.ndarray) -> dict:
+    """Serialise a 4x4 matrix to the JSON dict format used by load_transformation_matrix.
+
+    Args:
+        matrix: 4x4 numpy array.
+
+    Returns:
+        Dict with key "H" mapping to a list-of-rows representation.
+    """
+    return {"H": matrix.tolist()}
+
+
+def write_pose_json(matrix: np.ndarray, output_path: Path) -> None:
+    """Write a single 4x4 pose matrix to a JSON file.
+
+    The output format is compatible with load_transformation_matrix.
+
+    Args:
+        matrix: 4x4 numpy array representing the pose.
+        output_path: Destination JSON file path.
+    """
+    with open(output_path, "w") as f:
+        json.dump(matrix_to_json_dict(matrix), f, indent=4)
+
+
 def load_point_cloud(
     ply_path: Path,
     voxel_size: float = 0.0,
