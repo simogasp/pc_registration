@@ -103,6 +103,44 @@ uv run ./fuse_scans.py --input data/scans --output output/fused --step 5
 
 ---
 
+### prepare_scan_dataset.py
+
+**Purpose:** Convert a directory of XYZ point cloud scans and a flat-text poses file to binary PLY and JSON files compatible with all registration scripts.
+
+**Key Features:**
+
+- Discovers all `.xyz` files in the input directory, sorted numerically by stem
+- Converts each XYZ scan to binary PLY format preserving the original stem name (`0.xyz` -> `0.ply`)
+- Reads a flat-text poses file (default: `poses.txt`) and writes one JSON pose file per scan in the `{"H": [[...]]}` format
+- Optional `--scale` factor applied consistently to both point cloud coordinates and pose translations
+- Output directory defaults to the same directory as the input files
+
+**Usage:**
+
+```bash
+# Convert in-place (PLY and JSON written alongside XYZ files)
+uv run ./prepare_scan_dataset.py --input data/my_scans
+
+# Write to a separate output directory
+uv run ./prepare_scan_dataset.py --input data/my_scans --output-dir data/my_scans/converted
+
+# Apply a scale factor (e.g. metres to millimetres)
+uv run ./prepare_scan_dataset.py --input data/my_scans --output-dir data/my_scans/converted --scale 1000.0
+
+# Custom poses file path
+uv run ./prepare_scan_dataset.py --input data/my_scans --poses data/my_scans/ground_truth.txt
+```
+
+**Parameters:**
+
+- `--input` / `-i`: Directory containing `.xyz` scan files and the poses file (required)
+- `--output-dir` / `-o`: Directory where PLY and JSON files will be written (default: same as input directory)
+- `--poses` / `-p`: Path to the flat-text poses file (default: `poses.txt` inside the input directory)
+- `--scale` / `-s`: Scale factor applied to point cloud coordinates and pose translations (default: 1.0)
+- `--log-level`: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) (default: INFO)
+
+---
+
 ### poses_txt_to_json.py
 
 **Purpose:** Convert a row-major flat-text poses file to per-scan JSON pose files compatible with all registration scripts.
@@ -122,19 +160,23 @@ uv run ./poses_txt_to_json.py --input data/dataset_real_lidar/poses.txt
 
 # Write JSON files to a separate directory
 uv run ./poses_txt_to_json.py --input data/dataset_real_lidar/poses.txt --output-dir data/dataset_real_lidar/poses_json
+
+# Apply a scale factor to the translation components
+uv run ./poses_txt_to_json.py --input data/dataset_real_lidar/poses.txt --scale 1000.0
 ```
 
 **Parameters:**
 
 - `--input`: Path to the input poses text file
 - `--output-dir`: Directory where JSON files will be written (default: same directory as the input file)
+- `--scale` / `-s`: Scale factor applied to the translation part of each pose (default: 1.0)
 - `--log-level`: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) (default: INFO)
 
 **Input format:**
 
 Each non-empty, non-comment line must contain exactly 16 space-separated floats representing a 4x4 homogeneous transformation matrix in row-major order:
 
-```
+```none
 r00 r01 r02 tx  r10 r11 r12 ty  r20 r21 r22 tz  0 0 0 1
 ```
 
