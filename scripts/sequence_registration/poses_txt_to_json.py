@@ -22,23 +22,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import numpy as np
 
+from registration.utils.logging import setup_logging
 from registration_common import read_poses_from_txt, scale_translation, write_pose_json
 
 logger = logging.getLogger(__name__)
-
-
-def setup_logging(level: int = logging.INFO) -> None:
-    """Configure root logger to write to stdout.
-
-    Args:
-        level: Logging level (e.g. logging.INFO).
-    """
-    logging.basicConfig(
-        stream=sys.stdout,
-        level=level,
-        format="[%(asctime)s][%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
 
 
 def write_all_poses(

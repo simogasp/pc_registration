@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import numpy as np
 import open3d as o3d
 
+from registration.utils.logging import setup_logging
 from registration_common import read_poses_from_txt, scale_translation, write_pose_json
 
 logger = logging.getLogger(__name__)
@@ -74,20 +75,6 @@ def _convert_worker(args: tuple) -> str:
     xyz_path, output_path, scale = args
     convert_xyz_to_ply(xyz_path, output_path, scale=scale)
     return output_path.name
-
-
-def setup_logging(level: int = logging.INFO) -> None:
-    """Configure root logger to write to stdout.
-
-    Args:
-        level: Logging level (e.g. logging.INFO).
-    """
-    logging.basicConfig(
-        stream=sys.stdout,
-        level=level,
-        format="[%(asctime)s][%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
 
 
 def find_xyz_files(data_dir: Path) -> List[Path]:
