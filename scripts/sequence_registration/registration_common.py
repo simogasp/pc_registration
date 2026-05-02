@@ -411,3 +411,83 @@ def save_poses_to_file(poses: List[np.ndarray], output_path: Path):
         json.dump(poses_data, f, indent=2)
 
     logger.info(f"Saved {len(poses)} poses to {output_path.name}")
+
+
+POSE_MATRIX_SIZE = 4
+POSE_FLOATS_PER_LINE = POSE_MATRIX_SIZE * POSE_MATRIX_SIZE
+
+
+def parse_pose_line(line: str, line_number: int) -> np.ndarray:
+    """Parse one line of a flat-text poses file into a 4x4 matrix.
+
+    Args:
+        line: Space-separated string of 16 floats.
+        line_number: 1-based line index used in error messages.
+
+    Returns:
+        4x4 numpy array in row-major order.
+
+    Raises:
+        ValueError: If the line does not contain exactly 16 floats.
+    """
+    values = line.split()
+    if len(values) != POSE_FLOATS_PER_LINE:
+        raise ValueError(
+            f"Line {line_number}: expected {POSE_FLOATS_PER_LINE} values, "
+            f"got {len(values)}"
+        )
+    return np.array([float(v) for v in values], dtype=float).reshape(
+        POSE_MATRIX_SIZE, POSE_MATRIX_SIZE
+    )
+
+
+def read_poses_from_txt(poses_file: Path) -> List[np.ndarray]:
+    """Read all poses from a flat-text poses file.
+
+    Blank lines and lines starting with '#' are skipped. Each remaining line
+    must contain exactly 16 space-separated floats representing a 4x4
+    transformation matrix in row-major order.
+
+    Args:
+        poses_file: Path to the text file.
+
+    Returns:
+        List of 4x4 numpy arrays, one per non-empty line.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        ValueError: If any line has an unexpected number of values.
+    """
+    if not poses_file.exists():
+        raise FileNotFoundError(f"Poses file not found: {poses_file}")
+
+    poses = []
+    line_number = 0
+    with open(poses_file, "r") as f:
+        for raw_line in f:
+            line_number += 1
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            poses.append(parse_pose_line(line, line_number))
+
+    logger.info(f"Read {len(poses)} poses from {poses_file}")
+    return poses
+
+
+def scale_translation(matrix: np.ndarray, scale: float) -> np.ndarray:
+    """Return a copy of a 4x4 pose matrix with the translation scaled.
+
+    Only the first three elements of the last column (tx, ty, tz) are
+    affected; the rotation block and the homogeneous row are left unchanged.
+
+    Args:
+        matrix: 4x4 numpy array representing the pose.
+        scale: Multiplicative factor applied to the translation components.
+
+    Returns:
+        New 4x4 numpy array with scaled translation.
+    """
+    scaled = matrix.copy()
+    scaled[:3, 3] *= scale
+    return scaled
