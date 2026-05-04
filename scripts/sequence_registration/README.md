@@ -216,8 +216,8 @@ uv run ./multiway_registration.py --input data/scans --output output/multiway --
 
 - `--input`: Directory containing `.ply` and `.json` scan pairs
 - `--output`: Output directory for results
-- `--voxel-size-input`: Voxel size (mm) for downsampling input scans (default: 50.0)
-- `--voxel-size-fusion`: Voxel size (mm) for final map fusion (default: 10.0)
+- `--voxel-size-input`: Voxel size (mm) for downsampling input scans **used only during registration** (pose graph construction and ICP). Set to `0` to disable. Smaller values improve map accuracy at the cost of higher memory and compute (default: 50.0).
+- `--voxel-size-fusion`: Voxel size (mm) for downsampling the final fused map (default: 10.0). After pose optimisation, the script reloads all scans at **full resolution** and transforms them with the optimised poses before applying this voxel filter. This makes `--voxel-size-fusion` the sole parameter controlling output map density, independently of `--voxel-size-input`.
 - `--max-correspondence-distance`: ICP correspondence distance threshold (default: 150.0)
 - `--loop-closure-distance`: Distance threshold for loop closure detection (optional)
 - `--no-ground-truth`: Disable ground truth initialization, use sequential ICP instead
@@ -558,9 +558,12 @@ When `--voxel-sizes` filter is applied (e.g., "100,150,450"):
 - `find_scan_pairs()`: Find matching `.ply` and `.json` file pairs
 - `load_transformation_matrix()`: Load 4x4 transformation from JSON
 - `load_point_cloud()`: Load PLY with optional downsampling and normal estimation
+- `load_and_transform_scan()`: Load a PLY at full resolution and apply a rigid transformation (used for map fusion)
 - `pairwise_registration()`: Perform ICP or GICP registration between two point clouds (supports both classic ICP and Generalized ICP)
 - `remove_outliers()`: Remove statistical outliers from point cloud
 - `filter_distant_points()`: Filter points beyond distance threshold or percentile
+- `save_point_cloud_binary()`: Save a point cloud as binary PLY
+- `save_parameters()`: Save execution parameters to a JSON file
 - `rotation_error_degrees()`: Compute rotation error between two rotation matrices
 - `translation_error()`: Compute Euclidean distance between translation vectors
 - `load_poses_from_file()`: Load all poses from a single JSON file (like optimized_poses.json)

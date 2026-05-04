@@ -8,7 +8,6 @@ creates a fused map from the optimized point clouds.
 
 import argparse
 from datetime import datetime
-import json
 import logging
 from pathlib import Path
 from typing import List, Tuple, Optional
@@ -29,10 +28,13 @@ from registration_common import (  # noqa: E402
     find_scan_pairs,
     load_transformation_matrix,
     load_point_cloud,
+    load_and_transform_scan,
     pairwise_registration,
     remove_outliers,
     filter_distant_points,
     save_poses_to_file,
+    save_point_cloud_binary,
+    save_parameters,
 )
 
 logger = logging.getLogger(__name__)
@@ -334,9 +336,35 @@ def optimize_pose_graph(
     return pose_graph
 
 
+def load_full_resolution_scans(
+    pairs: List[Tuple[Path, Path]],
+    poses: List[np.ndarray],
+) -> List[o3d.geometry.PointCloud]:
+    """Reload all scans at full resolution and transform with the given poses.
+
+    This is called after pose graph optimisation to build the fused map at full
+    point density, independently of the voxel size used during registration.
+
+    Args:
+        pairs: List of (ply_path, json_path) tuples identifying the scans.
+        poses: List of 4x4 transformation matrices, one per scan.
+
+    Returns:
+        List of transformed full-resolution point clouds.
+    """
+    logger.info(f"Reloading {len(pairs)} scans at full resolution for map fusion...")
+    transformed_scans = []
+    for i, ((ply_path, _), pose) in enumerate(zip(pairs, poses)):
+        logger.info(f"  Loading scan {i}/{len(pairs)}: {ply_path.name}")
+        pcd = load_and_transform_scan(ply_path, pose)
+        transformed_scans.append(pcd)
+        logger.debug(f"  Scan {i}: {len(pcd.points)} points")
+    logger.info(f"Loaded {len(transformed_scans)} full-resolution scans")
+    return transformed_scans
+
+
 def create_fused_map(
-    point_clouds: List[o3d.geometry.PointCloud],
-    optimized_poses: List[np.ndarray],
+    transformed_scans: List[o3d.geometry.PointCloud],
     voxel_size: float = 10.0,
     remove_outliers_flag: bool = False,
     outlier_nb_neighbors: int = 20,
@@ -345,12 +373,12 @@ def create_fused_map(
     max_distance: Optional[float] = None,
     distance_percentile: float = 99.0,
 ) -> o3d.geometry.PointCloud:
-    """Create a fused map from optimized point clouds.
+    """Create a fused map from a list of pre-transformed point clouds.
 
     Args:
-        point_clouds: List of point clouds to fuse.
-        optimized_poses: List of optimized pose matrices.
-        voxel_size: Voxel size for final downsampling.
+        transformed_scans: List of point clouds already in world frame.
+        voxel_size: Voxel size (mm) for the final downsampling step. Set to 0
+            to skip downsampling.
         remove_outliers_flag: If True, remove outliers from fused map.
         outlier_nb_neighbors: Number of neighbors for statistical outlier removal.
         outlier_std_ratio: Standard deviation ratio threshold for outlier removal.
@@ -363,18 +391,15 @@ def create_fused_map(
     """
     logger.info("Creating fused map...")
 
-    # Transform and combine all point clouds
+    # Concatenate all pre-transformed point clouds
     combined_pcd = o3d.geometry.PointCloud()
-    for i, (pcd, pose) in enumerate(zip(point_clouds, optimized_poses)):
-        # Create copy and transform
-        pcd_transformed = o3d.geometry.PointCloud(pcd)
-        pcd_transformed.transform(pose)
-        combined_pcd += pcd_transformed
+    for i, pcd in enumerate(transformed_scans):
+        combined_pcd += pcd
         logger.debug(f"  Added scan {i} with {len(pcd.points)} points")
 
     logger.info(f"Combined map has {len(combined_pcd.points)} points")
 
-    # Downsample to fuse overlapping points
+    # Downsample to merge overlapping points from adjacent scans
     if voxel_size > 0:
         logger.info(f"Downsampling with voxel size {voxel_size}...")
         fused_pcd = combined_pcd.voxel_down_sample(voxel_size=voxel_size)
@@ -398,37 +423,6 @@ def create_fused_map(
         )
 
     return fused_pcd
-
-
-def save_point_cloud_binary(pcd: o3d.geometry.PointCloud, output_path: Path):
-    """Save point cloud in binary PLY format.
-
-    Args:
-        pcd: Point cloud to save.
-        output_path: Output file path.
-    """
-    success = o3d.io.write_point_cloud(
-        str(output_path), pcd, write_ascii=False, compressed=False
-    )
-
-    if not success:
-        raise IOError(f"Failed to save point cloud to {output_path}")
-
-    file_size_mb = output_path.stat().st_size / (1024 * 1024)
-    logger.info(f"Saved {output_path.name} ({file_size_mb:.2f} MB)")
-
-
-def save_parameters(params: dict, output_path: Path):
-    """Save execution parameters to a JSON file.
-
-    Args:
-        params: Dictionary of parameters used for the execution.
-        output_path: Output file path.
-    """
-    with open(output_path, "w") as f:
-        json.dump(params, f, indent=2)
-
-    logger.info(f"Saved execution parameters to {output_path.name}")
 
 
 def multiway_registration(
@@ -580,13 +574,20 @@ def multiway_registration(
     poses_output = output_path / "optimized_poses.json"
     save_poses_to_file(optimized_poses, poses_output)
 
+    # Reload full-resolution scans and apply optimised poses for map fusion.
+    # This is separate from the downsampled clouds used during registration so
+    # that --voxel-size-fusion controls the final map resolution independently.
+    logger.info("=" * 60)
+    logger.info("Reloading full-resolution scans for map fusion...")
+    logger.info("=" * 60)
+    full_res_scans = load_full_resolution_scans(pairs, optimized_poses)
+
     # Create and save fused map
     logger.info("=" * 60)
     logger.info("Creating fused map...")
     logger.info("=" * 60)
     fused_map = create_fused_map(
-        point_clouds,
-        optimized_poses,
+        full_res_scans,
         voxel_size=voxel_size_fusion,
         remove_outliers_flag=remove_outliers_flag,
         outlier_nb_neighbors=outlier_nb_neighbors,

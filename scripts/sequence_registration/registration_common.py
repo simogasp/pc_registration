@@ -491,3 +491,61 @@ def scale_translation(matrix: np.ndarray, scale: float) -> np.ndarray:
     scaled = matrix.copy()
     scaled[:3, 3] *= scale
     return scaled
+
+
+def load_and_transform_scan(
+    ply_path: Path, transformation: np.ndarray
+) -> o3d.geometry.PointCloud:
+    """Load a point cloud at full resolution and apply a rigid transformation.
+
+    Normals are not estimated, making this suitable for map fusion where ICP
+    is not performed on the loaded cloud.
+
+    Args:
+        ply_path: Path to PLY file.
+        transformation: 4x4 transformation matrix to apply.
+
+    Returns:
+        Transformed point cloud at full resolution.
+
+    Raises:
+        ValueError: If the point cloud is empty.
+    """
+    pcd = load_point_cloud(ply_path, voxel_size=0.0, estimate_normals=False)
+    pcd.transform(transformation)
+    logger.debug(f"Loaded and transformed {ply_path.name}: {len(pcd.points)} points")
+    return pcd
+
+
+def save_point_cloud_binary(pcd: o3d.geometry.PointCloud, output_path: Path) -> None:
+    """Save a point cloud in binary PLY format.
+
+    Args:
+        pcd: Point cloud to save.
+        output_path: Output file path.
+
+    Raises:
+        IOError: If Open3D reports a write failure.
+    """
+    success = o3d.io.write_point_cloud(
+        str(output_path), pcd, write_ascii=False, compressed=False
+    )
+
+    if not success:
+        raise IOError(f"Failed to save point cloud to {output_path}")
+
+    file_size_mb = output_path.stat().st_size / (1024 * 1024)
+    logger.info(f"Saved {output_path.name} ({file_size_mb:.2f} MB)")
+
+
+def save_parameters(params: dict, output_path: Path) -> None:
+    """Save execution parameters to a JSON file.
+
+    Args:
+        params: Dictionary of parameters to serialise.
+        output_path: Output file path.
+    """
+    with open(output_path, "w") as f:
+        json.dump(params, f, indent=2)
+
+    logger.info(f"Saved execution parameters to {output_path.name}")

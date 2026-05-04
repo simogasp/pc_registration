@@ -9,13 +9,11 @@ two output maps:
 """
 
 import argparse
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-import numpy as np
 import open3d as o3d
 
 from registration.utils.logging import setup_logging
@@ -30,38 +28,14 @@ if str(scripts_dir) not in sys.path:
 from registration_common import (  # noqa: E402
     find_scan_pairs,
     load_transformation_matrix,
+    load_and_transform_scan,
     remove_outliers,
     filter_distant_points,
+    save_point_cloud_binary,
+    save_parameters,
 )
 
 logger = logging.getLogger(__name__)
-
-
-def load_and_transform_scan(
-    ply_path: Path, transformation: np.ndarray
-) -> o3d.geometry.PointCloud:
-    """Load a point cloud from PLY and apply a transformation.
-
-    Args:
-        ply_path: Path to PLY file.
-        transformation: 4x4 transformation matrix to apply.
-
-    Returns:
-        Transformed point cloud.
-
-    Raises:
-        ValueError: If the point cloud is empty.
-    """
-    pcd = o3d.io.read_point_cloud(str(ply_path))
-
-    if not pcd.has_points():
-        raise ValueError(f"Point cloud {ply_path} is empty")
-
-    # Apply transformation
-    pcd.transform(transformation)
-
-    logger.debug(f"Loaded and transformed {ply_path.name}: {len(pcd.points)} points")
-    return pcd
 
 
 def process_all_scans(pairs: List[Tuple[Path, Path]]) -> List[o3d.geometry.PointCloud]:
@@ -142,37 +116,6 @@ def create_fused_map(
     )
 
     return fused_pcd
-
-
-def save_point_cloud_binary(pcd: o3d.geometry.PointCloud, output_path: Path):
-    """Save point cloud in binary PLY format.
-
-    Args:
-        pcd: Point cloud to save.
-        output_path: Output file path.
-    """
-    success = o3d.io.write_point_cloud(
-        str(output_path), pcd, write_ascii=False, compressed=False
-    )
-
-    if not success:
-        raise IOError(f"Failed to save point cloud to {output_path}")
-
-    file_size_mb = output_path.stat().st_size / (1024 * 1024)
-    logger.info(f"Saved {output_path.name} ({file_size_mb:.2f} MB)")
-
-
-def save_parameters(params: dict, output_path: Path):
-    """Save execution parameters to a JSON file.
-
-    Args:
-        params: Dictionary of parameters used for the execution.
-        output_path: Output file path.
-    """
-    with open(output_path, "w") as f:
-        json.dump(params, f, indent=2)
-
-    logger.info(f"Saved execution parameters to {output_path.name}")
 
 
 def fuse_scans(
