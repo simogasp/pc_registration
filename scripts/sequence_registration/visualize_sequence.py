@@ -81,6 +81,7 @@ class SequenceVisualizer:
         animation_speed: float = DEFAULT_ANIMATION_SPEED,
         start_scan: Optional[int] = None,
         end_scan: Optional[int] = None,
+        step: int = 1,
         poses_file: Optional[str] = None,
     ):
         """Initialize the sequence visualizer.
@@ -91,6 +92,7 @@ class SequenceVisualizer:
             animation_speed: Time in seconds between frames.
             start_scan: Index of first scan (0-based, inclusive).
             end_scan: Index of last scan (0-based, inclusive). None = last scan.
+            step: Process every nth scan within the selected range (default: 1 = all scans).
             poses_file: Optional path to JSON file containing all poses (like optimized_poses.json).
         """
         self.scan_pairs = scan_pairs
@@ -99,9 +101,11 @@ class SequenceVisualizer:
         # Apply scan range
         self.start_idx = start_scan if start_scan is not None else 0
         self.end_idx = end_scan if end_scan is not None else len(scan_pairs) - 1
+        if step < 1:
+            raise ValueError(f"step must be >= 1, got {step}")
         self._validate_scan_range()
 
-        self.scan_pairs = self.scan_pairs[self.start_idx : self.end_idx + 1]
+        self.scan_pairs = self.scan_pairs[self.start_idx : self.end_idx + 1 : step]
         self.num_scans = len(self.scan_pairs)
 
         # Animation state
@@ -142,7 +146,7 @@ class SequenceVisualizer:
             self._load_fused_map(fused_map_path)
 
         logger.info(f"Initialized visualizer with {self.num_scans} scans")
-        logger.info(f"Scan range: {self.start_idx} to {self.end_idx}")
+        logger.info(f"Scan range: {self.start_idx} to {self.end_idx} (step={step})")
         logger.info(f"Animation speed: {self.animation_speed}s per frame")
 
     def _validate_scan_range(self):
@@ -618,6 +622,13 @@ def main():
     )
 
     parser.add_argument(
+        "--step",
+        type=int,
+        default=1,
+        help="Process every nth scan within the selected range (1=consecutive, 2=every other scan, etc.)",
+    )
+
+    parser.add_argument(
         "--poses",
         "-p",
         default=None,
@@ -654,6 +665,7 @@ def main():
             animation_speed=args.speed,
             start_scan=args.start_scan,
             end_scan=args.end_scan,
+            step=args.step,
             poses_file=args.poses,
         )
         visualizer.run()

@@ -224,6 +224,7 @@ uv run ./multiway_registration.py --input data/scans --output output/multiway --
 - `--use-gicp`: Use Generalized ICP (GICP) instead of classic ICP for registration
 - `--start-scan`: Index of first scan to process (0-based, inclusive)
 - `--end-scan`: Index of last scan to process (0-based, inclusive)
+- `--step`: Process every nth scan within the selected range (default: 1 = all scans). For example, `--step 5` processes scans 0, 5, 10, 15, ...
 - `--remove-outliers`: Apply statistical outlier removal to fused map
 - `--outlier-nb-neighbors`: Number of neighbors for outlier detection (default: 20)
 - `--outlier-std-ratio`: Standard deviation ratio threshold (default: 2.0)

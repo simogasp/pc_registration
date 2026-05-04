@@ -435,6 +435,7 @@ def multiway_registration(
     use_ground_truth: bool = True,
     start_scan: Optional[int] = None,
     end_scan: Optional[int] = None,
+    step: int = 1,
     remove_outliers_flag: bool = False,
     outlier_nb_neighbors: int = 20,
     outlier_std_ratio: float = 2.0,
@@ -456,6 +457,7 @@ def multiway_registration(
             If False, perform preliminary consecutive registration to build initial poses.
         start_scan: Index of first scan to process (0-based, inclusive). None = start from 0.
         end_scan: Index of last scan to process (0-based, inclusive). None = process until end.
+        step: Process every nth scan within the selected range (default: 1 = all scans).
         remove_outliers_flag: If True, remove outliers from fused map.
         outlier_nb_neighbors: Number of neighbors for statistical outlier removal.
         outlier_std_ratio: Standard deviation ratio threshold for outlier removal.
@@ -498,10 +500,13 @@ def multiway_registration(
     if start_idx > end_idx:
         raise ValueError(f"start_scan ({start_idx}) must be <= end_scan ({end_idx})")
 
-    # Slice pairs to selected range (end_idx is inclusive)
-    pairs = pairs[start_idx : end_idx + 1]
+    if step < 1:
+        raise ValueError(f"step must be >= 1, got {step}")
+
+    # Slice pairs: inclusive range, then apply step
+    pairs = pairs[start_idx : end_idx + 1 : step]
     logger.info(
-        f"Processing scans {start_idx} to {end_idx} (inclusive) - "
+        f"Processing scans {start_idx} to {end_idx} (step={step}) - "
         f"{len(pairs)} scans out of {total_scans} total"
     )
 
@@ -517,6 +522,7 @@ def multiway_registration(
         "use_ground_truth": use_ground_truth,
         "start_scan_requested": start_scan,
         "end_scan_requested": end_scan,
+        "step": step,
         "start_scan_actual": start_idx,
         "end_scan_actual": end_idx,
         "total_scans_available": total_scans,
@@ -674,6 +680,13 @@ def main():
     )
 
     parser.add_argument(
+        "--step",
+        type=int,
+        default=1,
+        help="Process every nth scan within the selected range (default: 1 = all scans)",
+    )
+
+    parser.add_argument(
         "--remove-outliers",
         action="store_true",
         help="Remove outlier points from the fused map",
@@ -735,6 +748,7 @@ def main():
             use_ground_truth=not args.no_ground_truth,
             start_scan=args.start_scan,
             end_scan=args.end_scan,
+            step=args.step,
             remove_outliers_flag=args.remove_outliers,
             outlier_nb_neighbors=args.outlier_nb_neighbors,
             outlier_std_ratio=args.outlier_std_ratio,
