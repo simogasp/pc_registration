@@ -361,7 +361,7 @@ def main(args: argparse.Namespace):
 
     result_ransac: o3d.pipelines.registration.RegistrationResult = None
     start = time.time()
-    global_attempts = 1
+    global_attempts = 0
     while not result_ransac or result_ransac.fitness < min_fitness:
         result_ransac = execute_global_registration(
             source_down,
@@ -372,8 +372,8 @@ def main(args: argparse.Namespace):
             args.max_iter_icp,
         )
 
+        global_attempts += 1    
         logger.info(f"RANSAC attempt {global_attempts} result: {result_ransac}")
-        global_attempts += 1
 
         # check if the solution is correct wrt the gravity direction, we want to discard solutions that are upside down
         # @TODO maybe should pass transformation @ init_trans
