@@ -383,7 +383,9 @@ def main(args: argparse.Namespace):
 
         # check if the solution is correct wrt the gravity direction, we want to discard solutions that are upside down
         # @TODO maybe should pass transformation @ init_trans
-        upside_down = is_solution_upside_down(result_ransac.transformation, idx_gravity_axis)
+        upside_down = is_solution_upside_down(
+            result_ransac.transformation, idx_gravity_axis
+        )
         if result_ransac.fitness >= min_fitness and upside_down:
             logger.warning(
                 f"RANSAC attempt {global_attempts} result is upside down with a fitness of {result_ransac.fitness}, discarding."
