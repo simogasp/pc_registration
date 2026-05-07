@@ -11,7 +11,7 @@ This directory contains scripts for processing, registering, and fusing sequenti
 **Key Features:**
 
 - Performs pairwise ICP registration between scans at configurable intervals
-- Computes rotation error (degrees) and translation error (mm) vs ground truth
+- Computes rotation error (degrees) and translation error vs ground truth
 - Generates comprehensive statistics (mean, median, std, min, max)
 - Optional JSON output with per-pair details
 
@@ -37,7 +37,7 @@ uv run ./validate_ground_truth.py --input data/scans --use-gicp
 **Parameters:**
 
 - `--input`: Directory containing `.ply` and `.json` scan pairs
-- `--voxel-size`: Voxel size (mm) for downsampling (default: 50.0)
+- `--voxel-size`: Voxel size for downsampling (default: 50.0)
 - `--max-correspondence-distance`: ICP correspondence distance (default: 150.0)
 - `--step`: Step size for selecting pairs (1=consecutive, 2=every other scan, etc.) (default: 1)
 - `--no-gt-init`: Use identity initialization instead of ground truth
@@ -88,14 +88,14 @@ uv run ./fuse_scans.py --input data/scans --output output/fused --step 5
 
 - `--input`: Directory containing `.ply` and `.json` scan pairs
 - `--output`: Output directory (default: output/fused_scans)
-- `--voxel-size`: Voxel size (mm) for fusion downsampling (default: 10.0)
+- `--voxel-size`: Voxel size for fusion downsampling (default: 10.0)
 - `--skip-raw`: Skip saving raw concatenated map
 - `--skip-fused`: Skip saving fused map
 - `--remove-outliers`: Apply statistical outlier removal
 - `--outlier-nb-neighbors`: Number of neighbors for outlier detection (default: 20)
 - `--outlier-std-ratio`: Standard deviation ratio threshold (default: 2.0)
 - `--filter-distant`: Filter out points that are too far from the point cloud centroid
-- `--max-distance`: Maximum distance (mm) from centroid for filtering
+- `--max-distance`: Maximum distance from centroid for filtering
 - `--distance-percentile`: Distance percentile threshold for filtering (default: 99.0)
 - `--start-scan`: Index of first scan to process (0-based, inclusive)
 - `--end-scan`: Index of last scan to process (0-based, inclusive)
@@ -216,8 +216,8 @@ uv run ./multiway_registration.py --input data/scans --output output/multiway --
 
 - `--input`: Directory containing `.ply` and `.json` scan pairs
 - `--output`: Output directory for results
-- `--voxel-size-input`: Voxel size (mm) for downsampling input scans **used only during registration** (pose graph construction and ICP). Set to `0` to disable. Smaller values improve map accuracy at the cost of higher memory and compute (default: 50.0).
-- `--voxel-size-fusion`: Voxel size (mm) for downsampling the final fused map (default: 10.0). After pose optimisation, the script reloads all scans at **full resolution** and transforms them with the optimised poses before applying this voxel filter. This makes `--voxel-size-fusion` the sole parameter controlling output map density, independently of `--voxel-size-input`.
+- `--voxel-size-input`: Voxel size for downsampling input scans **used only during registration** (pose graph construction and ICP). Set to `0` to disable. Smaller values improve map accuracy at the cost of higher memory and compute (default: 50.0).
+- `--voxel-size-fusion`: Voxel size for downsampling the final fused map (default: 10.0). After pose optimisation, the script reloads all scans at **full resolution** and transforms them with the optimised poses before applying this voxel filter. This makes `--voxel-size-fusion` the sole parameter controlling output map density, independently of `--voxel-size-input`.
 - `--max-correspondence-distance`: ICP correspondence distance threshold (default: 150.0)
 - `--loop-closure-distance`: Distance threshold for loop closure detection (optional)
 - `--no-ground-truth`: Disable ground truth initialization, use sequential ICP instead
@@ -229,7 +229,7 @@ uv run ./multiway_registration.py --input data/scans --output output/multiway --
 - `--outlier-nb-neighbors`: Number of neighbors for outlier detection (default: 20)
 - `--outlier-std-ratio`: Standard deviation ratio threshold (default: 2.0)
 - `--filter-distant`: Filter out points that are too far from the point cloud centroid
-- `--max-distance`: Maximum distance (mm) from centroid for filtering
+- `--max-distance`: Maximum distance from centroid for filtering
 - `--distance-percentile`: Distance percentile threshold for filtering (default: 99.0)
 
 ---
@@ -275,7 +275,7 @@ uv run ./localize_against_map.py --input data/scans --map output/fused_map.ply -
 # RANSAC + GICP refinement at original (undownsampled) resolution
 uv run ./localize_against_map.py --input data/scans --map output/fused_map.ply --refine-poses --use-gicp --refinement-voxel-size 0 --output localization_results.json
 
-# RANSAC + GICP refinement at a custom finer voxel size (e.g. 20mm)
+# RANSAC + GICP refinement at a custom finer voxel size (e.g. 20)
 uv run ./localize_against_map.py --input data/scans --map output/fused_map.ply --refine-poses --use-gicp --refinement-voxel-size 20 --output localization_results.json
 
 # Skip RANSAC and use pre-estimated poses as initialization for ICP refinement
@@ -289,12 +289,12 @@ uv run ./localize_against_map.py --input data/scans --map output/fused_map.ply -
 
 - `--input`: Directory containing `.ply` and `.json` scan pairs
 - `--map`: Path to global map PLY file (e.g., fused_map_optimized.ply)
-- `--voxel-size`: Voxel size (mm) for downsampling scans and map (default: 50.0)
+- `--voxel-size`: Voxel size for downsampling scans and map (default: 50.0)
 - `--max-correspondence-distance`: RANSAC correspondence distance (default: 150.0)
 - `--refine-poses`: Enable ICP/GICP refinement after RANSAC (default: False)
 - `--use-gicp`: Use Generalized ICP instead of point-to-plane ICP for refinement (default: False)
 - `--icp-refinement-distance`: Max correspondence distance for ICP/GICP refinement (default: 50.0)
-- `--refinement-voxel-size`: Voxel size (mm) for downsampling during refinement. If not set, reuses the RANSAC clouds (no extra loading). Set to `0` to use the original undownsampled point clouds (default: None)
+- `--refinement-voxel-size`: Voxel size for downsampling during refinement. If not set, reuses the RANSAC clouds (no extra loading). Set to `0` to use the original undownsampled point clouds (default: None)
 - `--estimated-poses`: Path to a JSON file of pre-estimated poses (same format as `estimated_poses.json` produced by this script). When provided, RANSAC global registration is skipped and these poses are used as the initial estimate for refinement. Has no effect unless `--refine-poses` is also passed.
 - `--use-gt-init`: Use ground truth as initialization (otherwise uses identity)
 - `--output`: Optional JSON file for detailed results
@@ -314,9 +314,9 @@ When `--output` is specified, the script creates:
 **Output Statistics:**
 
 - Rotation error (degrees): mean, median, std, min, max
-- Translation error (mm): mean, median, std, min, max
+- Translation error: mean, median, std, min, max
 - Localization fitness: mean, median, std, min, max
-- Localization RMSE (mm): mean, median, std, min, max
+- Localization RMSE: mean, median, std, min, max
 
 **Use Cases:**
 
@@ -420,7 +420,7 @@ uv run ./plot_validation_errors.py --input validation_results.json --output outp
 **Output Files:**
 
 - `histogram_rotation_error.png`: Distribution of rotation errors (degrees)
-- `histogram_translation_error.png`: Distribution of translation errors (mm)
+- `histogram_translation_error.png`: Distribution of translation errors
 
 ---
 
@@ -451,7 +451,7 @@ uv run ./plot_localization_errors.py --input localization_results.json --output 
 **Output Files:**
 
 - `histogram_rotation_error.png`: Distribution of rotation errors (degrees)
-- `histogram_translation_error.png`: Distribution of translation errors (mm)
+- `histogram_translation_error.png`: Distribution of translation errors
 
 ---
 
@@ -491,9 +491,9 @@ uv run ./plot_localization_comparison.py --input output/localization/comparison 
 
 The script expects subdirectories following the pattern `{method}_vs{voxel_size}`:
 
-- `ransac_vs100`: RANSAC-only localization with 100mm voxel size
-- `ransac_icp_vs150`: RANSAC+ICP refinement with 150mm voxel size
-- `ransac_gicp_vs450`: RANSAC+GICP refinement with 450mm voxel size
+- `ransac_vs100`: RANSAC-only localization with voxel size 100
+- `ransac_icp_vs150`: RANSAC+ICP refinement with voxel size 150
+- `ransac_gicp_vs450`: RANSAC+GICP refinement with voxel size 450
 
 **Output Files:**
 
@@ -573,7 +573,7 @@ When `--voxel-sizes` filter is applied (e.g., "100,150,450"):
 **Constants:**
 
 - `NORMAL_ESTIMATION_RADIUS_MULTIPLIER = 2`: For computing normal estimation radius
-- `DEFAULT_NORMAL_ESTIMATION_RADIUS_MM = 100.0`: Default radius when no voxel size specified
+- `DEFAULT_NORMAL_ESTIMATION_RADIUS = 100.0`: Default radius when no voxel size specified
 - `NORMAL_ESTIMATION_MAX_NEIGHBORS = 30`: Max neighbors for normal estimation
 
 ---
@@ -702,7 +702,7 @@ uv run ./fuse_scans.py --input data/dataset_real_lidar/ --output output/sequence
 #   - RANSAC only
 #   - RANSAC + ICP
 #   - RANSAC + GICP
-# Example for voxel size 100mm:
+# Example for voxel size 100:
 uv run ./localize_against_map.py --input data/scans --map output/map_optimized/fused_map_optimized.ply --voxel-size 100 --output output/comparison/ransac_vs100/localization_results.json
 uv run ./localize_against_map.py --input data/scans --map output/map_optimized/fused_map_optimized.ply --voxel-size 100 --refine-poses --output output/comparison/ransac_icp_vs100/localization_results.json
 uv run ./localize_against_map.py --input data/scans --map output/map_optimized/fused_map_optimized.ply --voxel-size 100 --refine-poses --use-gicp --output output/comparison/ransac_gicp_vs100/localization_results.json

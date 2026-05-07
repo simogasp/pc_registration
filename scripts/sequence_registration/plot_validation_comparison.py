@@ -201,7 +201,7 @@ def create_comparison_boxplot(
             1,
             facecolor=color_map[vs],
             alpha=0.7,
-            label=f"Voxel Size {int(vs)} mm",
+            label=f"Voxel Size {int(vs)}",
         )
         for vs in voxel_sizes
     ]
@@ -224,9 +224,9 @@ def create_all_plots(results: Dict[Tuple[int, int], dict], output_dir: Path):
 
     metrics = [
         ("rotation_error_degrees", "Rotation Error (degrees)"),
-        ("translation_error_mm", "Translation Error (mm)"),
+        ("translation_error", "Translation Error"),
         ("fitness", "Registration Fitness"),
-        ("rmse_mm", "Registration RMSE (mm)"),
+        ("rmse", "Registration RMSE"),
     ]
 
     for metric_name, metric_label in metrics:

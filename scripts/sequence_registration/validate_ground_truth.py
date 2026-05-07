@@ -144,14 +144,14 @@ def validate_consecutive_pairs(
         logger.info("  (consecutive pairs: i and i+1)")
     else:
         logger.info(f"  (pairs with step: i and i+{step})")
-    logger.info(f"Voxel size: {voxel_size} mm")
-    logger.info(f"Max correspondence distance: {max_correspondence_distance} mm")
+    logger.info(f"Voxel size: {voxel_size}")
+    logger.info(f"Max correspondence distance: {max_correspondence_distance}")
     logger.info(f"Use ground truth initialization: {use_ground_truth_init}")
     logger.info("=" * 80)
 
     # Statistics accumulators
     rotation_errors = []
-    translation_errors_mm = []
+    translation_errors = []
     fitness_scores = []
     rmse_values = []
 
@@ -217,18 +217,18 @@ def validate_consecutive_pairs(
 
         # Store statistics
         rotation_errors.append(rot_error)
-        translation_errors_mm.append(trans_error)
+        translation_errors.append(trans_error)
         fitness_scores.append(reg_result.fitness)
         rmse_values.append(reg_result.inlier_rmse)
 
         # Print results
         logger.info("  Registration Statistics:")
         logger.info(f"    Fitness:      {reg_result.fitness:.4f}")
-        logger.info(f"    Inlier RMSE:  {reg_result.inlier_rmse:.4f} mm")
+        logger.info(f"    Inlier RMSE:  {reg_result.inlier_rmse:.4f}")
 
         logger.info("  Error vs Ground Truth:")
         logger.info(f"    Rotation error:    {rot_error:.4f}°")
-        logger.info(f"    Translation error: {trans_error:.4f} mm")
+        logger.info(f"    Translation error: {trans_error:.4f}")
 
         # Optional: print transformations for debugging
         if logger.isEnabledFor(logging.DEBUG):
@@ -251,7 +251,7 @@ def validate_consecutive_pairs(
             },
             "errors": {
                 "rotation_degrees": float(rot_error),
-                "translation_mm": float(trans_error),
+                "translation": float(trans_error),
             },
             "ground_truth_relative_pose": H_rel_gt.tolist(),
             "icp_relative_pose": H_rel_icp.tolist(),
@@ -270,12 +270,12 @@ def validate_consecutive_pairs(
     logger.info(f"  Min:    {np.min(rotation_errors):.4f}°")
     logger.info(f"  Max:    {np.max(rotation_errors):.4f}°")
 
-    logger.info("Translation Error (mm):")
-    logger.info(f"  Mean:   {np.mean(translation_errors_mm):.4f} mm")
-    logger.info(f"  Median: {np.median(translation_errors_mm):.4f} mm")
-    logger.info(f"  Std:    {np.std(translation_errors_mm):.4f} mm")
-    logger.info(f"  Min:    {np.min(translation_errors_mm):.4f} mm")
-    logger.info(f"  Max:    {np.max(translation_errors_mm):.4f} mm")
+    logger.info("Translation Error:")
+    logger.info(f"  Mean:   {np.mean(translation_errors):.4f}")
+    logger.info(f"  Median: {np.median(translation_errors):.4f}")
+    logger.info(f"  Std:    {np.std(translation_errors):.4f}")
+    logger.info(f"  Min:    {np.min(translation_errors):.4f}")
+    logger.info(f"  Max:    {np.max(translation_errors):.4f}")
 
     logger.info("Registration Fitness:")
     logger.info(f"  Mean:   {np.mean(fitness_scores):.4f}")
@@ -284,12 +284,12 @@ def validate_consecutive_pairs(
     logger.info(f"  Min:    {np.min(fitness_scores):.4f}")
     logger.info(f"  Max:    {np.max(fitness_scores):.4f}")
 
-    logger.info("Registration RMSE (mm):")
-    logger.info(f"  Mean:   {np.mean(rmse_values):.4f} mm")
-    logger.info(f"  Median: {np.median(rmse_values):.4f} mm")
-    logger.info(f"  Std:    {np.std(rmse_values):.4f} mm")
-    logger.info(f"  Min:    {np.min(rmse_values):.4f} mm")
-    logger.info(f"  Max:    {np.max(rmse_values):.4f} mm")
+    logger.info("Registration RMSE:")
+    logger.info(f"  Mean:   {np.mean(rmse_values):.4f}")
+    logger.info(f"  Median: {np.median(rmse_values):.4f}")
+    logger.info(f"  Std:    {np.std(rmse_values):.4f}")
+    logger.info(f"  Min:    {np.min(rmse_values):.4f}")
+    logger.info(f"  Max:    {np.max(rmse_values):.4f}")
 
     # Save results to JSON if requested
     if output_file:
@@ -317,12 +317,12 @@ def validate_consecutive_pairs(
                     "min": float(np.min(rotation_errors)),
                     "max": float(np.max(rotation_errors)),
                 },
-                "translation_error_mm": {
-                    "mean": float(np.mean(translation_errors_mm)),
-                    "median": float(np.median(translation_errors_mm)),
-                    "std": float(np.std(translation_errors_mm)),
-                    "min": float(np.min(translation_errors_mm)),
-                    "max": float(np.max(translation_errors_mm)),
+                "translation_error": {
+                    "mean": float(np.mean(translation_errors)),
+                    "median": float(np.median(translation_errors)),
+                    "std": float(np.std(translation_errors)),
+                    "min": float(np.min(translation_errors)),
+                    "max": float(np.max(translation_errors)),
                 },
                 "fitness": {
                     "mean": float(np.mean(fitness_scores)),
@@ -331,7 +331,7 @@ def validate_consecutive_pairs(
                     "min": float(np.min(fitness_scores)),
                     "max": float(np.max(fitness_scores)),
                 },
-                "rmse_mm": {
+                "rmse": {
                     "mean": float(np.mean(rmse_values)),
                     "median": float(np.median(rmse_values)),
                     "std": float(np.std(rmse_values)),
@@ -370,14 +370,14 @@ def main():
         "--voxel-size",
         type=float,
         default=50.0,
-        help="Voxel size (mm) for downsampling input scans (0 = no downsampling)",
+        help="Voxel size for downsampling input scans (0 = no downsampling)",
     )
 
     parser.add_argument(
         "--max-correspondence-distance",
         type=float,
         default=150.0,
-        help="Maximum correspondence distance (mm) for ICP registration",
+        help="Maximum correspondence distance for ICP registration",
     )
 
     parser.add_argument(

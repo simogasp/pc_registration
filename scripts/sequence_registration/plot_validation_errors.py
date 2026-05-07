@@ -66,7 +66,7 @@ def extract_error_values(data: dict) -> Tuple[List[float], List[float]]:
     for pair in pairs:
         errors = pair.get("errors", {})
         rotation_errors.append(errors.get("rotation_degrees", 0.0))
-        translation_errors.append(errors.get("translation_mm", 0.0))
+        translation_errors.append(errors.get("translation", 0.0))
 
     logger.info(f"Extracted {len(rotation_errors)} error pairs")
 

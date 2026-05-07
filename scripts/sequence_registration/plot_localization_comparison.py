@@ -169,9 +169,9 @@ def compute_success_rate(
 
     Args:
         rotation_errors: Per-scan rotation errors in degrees.
-        translation_errors: Per-scan translation errors in mm.
+        translation_errors: Per-scan translation errors.
         max_rot_err: Rotation error threshold in degrees.
-        max_transl_err: Translation error threshold in mm.
+        max_transl_err: Translation error threshold.
 
     Returns:
         Success rate as a fraction in [0, 1]. Returns 0.0 for empty inputs.
@@ -197,7 +197,7 @@ def extract_success_rate_data(
     Args:
         results: Dictionary of localization results {voxel_size: {method: data}}.
         max_rot_err: Rotation error threshold in degrees.
-        max_transl_err: Translation error threshold in mm.
+        max_transl_err: Translation error threshold.
 
     Returns:
         Nested dictionary: {voxel_size_str: {method: success_rate}} where success
@@ -277,7 +277,7 @@ def _create_boxplots_for_metric(
             colors=METHOD_COLORS,
             title=single_title_template.format(voxel_int=voxel_int),
         )
-        logger.debug(f"Created {filename_prefix} plot for voxel size {voxel_int}mm")
+        logger.debug(f"Created {filename_prefix} plot for voxel size {voxel_int}")
 
 
 def _create_barplots_for_success_rate(
@@ -294,14 +294,14 @@ def _create_barplots_for_success_rate(
     Args:
         results: Dictionary of localization results {voxel_size: {method: data}}.
         max_rot_err: Rotation error threshold in degrees.
-        max_transl_err: Translation error threshold in mm.
+        max_transl_err: Translation error threshold.
         output_dir: Directory where to save the plots.
         voxel_sizes: Sorted list of voxel sizes to include.
         methods: Ordered list of method display names.
         voxel_suffix: Filename suffix derived from the voxel size filter.
     """
     voxel_labels = [str(int(vs)) for vs in voxel_sizes]
-    threshold_str = f"rot < {max_rot_err}deg, transl < {max_transl_err}mm"
+    threshold_str = f"rot < {max_rot_err}deg, transl < {max_transl_err}"
     all_data = extract_success_rate_data(results, max_rot_err, max_transl_err)
 
     create_grouped_barplot(
@@ -328,11 +328,9 @@ def _create_barplots_for_success_rate(
             group_labels=[voxel_label],
             category_labels=methods,
             colors=METHOD_COLORS,
-            title=(
-                f"Localization Success Rate - Voxel {voxel_int}mm ({threshold_str})"
-            ),
+            title=(f"Localization Success Rate - Voxel {voxel_int} ({threshold_str})"),
         )
-        logger.debug(f"Created success rate plot for voxel size {voxel_int}mm")
+        logger.debug(f"Created success rate plot for voxel size {voxel_int}")
 
 
 def create_comparison_plots(
@@ -351,8 +349,8 @@ def create_comparison_plots(
             deriving output filenames).
         max_rot_err: Rotation error threshold for counting a scan as a success
             (degrees). If None, success rate plots are skipped.
-        max_transl_err: Translation error threshold for counting a scan as a success
-            (mm). If None, success rate plots are skipped.
+        max_transl_err: Translation error threshold for counting a scan as a success.
+            If None, success rate plots are skipped.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -374,27 +372,27 @@ def create_comparison_plots(
         methods=methods,
         voxel_suffix=voxel_suffix,
         combined_title="Localization Rotation Error Comparison Across Voxel Sizes and Methods",
-        single_title_template="Localization Rotation Error Comparison (Voxel Size: {voxel_int}mm)",
+        single_title_template="Localization Rotation Error Comparison (Voxel Size: {voxel_int})",
     )
 
     logger.info("Creating translation error comparison plots...")
     _create_boxplots_for_metric(
         results=results,
-        metric_key="translation_error_mm",
-        metric_label="Translation Error (mm)",
+        metric_key="translation_error",
+        metric_label="Translation Error",
         filename_prefix="comparison_translation_error",
         output_dir=output_dir,
         voxel_sizes=voxel_sizes,
         methods=methods,
         voxel_suffix=voxel_suffix,
         combined_title="Localization Translation Error Comparison Across Voxel Sizes and Methods",
-        single_title_template="Localization Translation Error Comparison (Voxel Size: {voxel_int}mm)",
+        single_title_template="Localization Translation Error Comparison (Voxel Size: {voxel_int})",
     )
 
     if max_rot_err is not None and max_transl_err is not None:
         logger.info(
             f"Creating success rate comparison plots "
-            f"(rot < {max_rot_err}deg, transl < {max_transl_err}mm)..."
+            f"(rot < {max_rot_err}deg, transl < {max_transl_err})..."
         )
         _create_barplots_for_success_rate(
             results=results,
@@ -543,7 +541,7 @@ if __name__ == "__main__":
         "--max-transl-err",
         type=float,
         default=200,
-        help="Translation error threshold (mm) for the success rate plots. "
+        help="Translation error threshold for the success rate plots. "
         "A scan is counted as successful when both its rotation and translation errors are below their respective thresholds. "
         "If not set, success rate plots are skipped.",
     )

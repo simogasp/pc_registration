@@ -117,9 +117,9 @@ def compute_success_rate(
 
     Args:
         rot_errors: Per-scan rotation errors in degrees.
-        transl_errors: Per-scan translation errors in mm.
+        transl_errors: Per-scan translation errors.
         max_rot: Rotation error threshold in degrees.
-        max_transl: Translation error threshold in mm.
+        max_transl: Translation error threshold.
 
     Returns:
         Success rate as a value in [0, 1]. Returns 0.0 for empty inputs.
@@ -235,13 +235,13 @@ def build_stats_table(
         ("Rotation error - mean (deg)", "rotation_error_degrees", "mean"),
         ("Rotation error - median (deg)", "rotation_error_degrees", "median"),
         ("Rotation error - std (deg)", "rotation_error_degrees", "std"),
-        ("Translation error - mean (mm)", "translation_error_mm", "mean"),
-        ("Translation error - median (mm)", "translation_error_mm", "median"),
-        ("Translation error - std (mm)", "translation_error_mm", "std"),
+        ("Translation error - mean", "translation_error", "mean"),
+        ("Translation error - median", "translation_error", "median"),
+        ("Translation error - std", "translation_error", "std"),
         ("Fitness - mean", "fitness", "mean"),
         ("Fitness - median", "fitness", "median"),
-        ("Inlier RMSE - mean (mm)", "inlier_rmse_mm", "mean"),
-        ("Inlier RMSE - median (mm)", "inlier_rmse_mm", "median"),
+        ("Inlier RMSE - mean", "inlier_rmse", "mean"),
+        ("Inlier RMSE - median", "inlier_rmse", "median"),
     ]
 
     for label, metric_key, stat_key in row_specs:
@@ -252,7 +252,7 @@ def build_stats_table(
             row.append(_fmt(val))
         lines.append("| " + " | ".join(row) + " |")
 
-    sr_label = f"Success rate (rot<{max_rot}deg, transl<{max_transl}mm)"
+    sr_label = f"Success rate (rot<{max_rot}deg, transl<{max_transl})"
     sr_row = [sr_label]
     for method in METHOD_ORDER:
         data = method_results.get(method)
@@ -290,11 +290,11 @@ def build_overview_table(
     """
     method_labels = [METHOD_DISPLAY.get(m, m) for m in METHOD_ORDER]
 
-    header_parts = ["RANSAC voxel (mm)"]
+    header_parts = ["RANSAC voxel"]
     for label in method_labels:
         header_parts += [
             f"{label}<br>rot. med (deg)",
-            f"{label}<br>transl. med (mm)",
+            f"{label}<br>transl. med",
             f"{label}<br>SR",
         ]
 
@@ -310,7 +310,7 @@ def build_overview_table(
                 _get_stat(data, "rotation_error_degrees", "median") if data else None
             )
             transl_med = (
-                _get_stat(data, "translation_error_mm", "median") if data else None
+                _get_stat(data, "translation_error", "median") if data else None
             )
             if data is not None:
                 rot_errors = data.get("rotation_errors", [])
@@ -359,7 +359,7 @@ def build_per_voxel_section(
     """Build a collapsible HTML/markdown section for one RANSAC voxel size.
 
     Args:
-        voxel_size: RANSAC voxel size in mm.
+        voxel_size: RANSAC voxel size.
         method_dirs: Dict mapping method_key to its result directory path.
         comparison_dir: Root comparison directory (for relative path computation).
         max_rot: Rotation error threshold for success rate.
@@ -409,7 +409,7 @@ def build_per_voxel_section(
 
     return (
         f"<details>\n"
-        f"<summary><strong>RANSAC Voxel Size: {voxel_size} mm</strong></summary>\n"
+        f"<summary><strong>RANSAC Voxel Size: {voxel_size}</strong></summary>\n"
         f"\n"
         f"#### Statistics\n"
         f"\n"
@@ -548,15 +548,13 @@ def generate_single_report(
         output_path: Destination for the report file. Defaults to
             comparison_dir/report.md.
         max_rot: Rotation error threshold in degrees for success rate.
-        max_transl: Translation error threshold in mm for success rate.
+        max_transl: Translation error threshold for success rate.
     """
     if output_path is None:
         output_path = comparison_dir / "report.md"
 
     ref_voxel = parse_refinement_voxel(comparison_dir)
-    ref_voxel_label = (
-        f"{ref_voxel} mm" if ref_voxel is not None else comparison_dir.name
-    )
+    ref_voxel_label = f"{ref_voxel}" if ref_voxel is not None else comparison_dir.name
 
     logger.info(f"Generating report for {comparison_dir.name} -> {output_path}")
 
@@ -583,8 +581,8 @@ def generate_single_report(
         "",
         f"**Generated:** {now}  ",
         f"**Directory:** `{comparison_dir.name}`  ",
-        f"**RANSAC voxel sizes tested:** {voxel_sizes_str} mm  ",
-        f"**Success rate thresholds:** rotation < {max_rot} deg, translation < {max_transl} mm",
+        f"**RANSAC voxel sizes tested:** {voxel_sizes_str}  ",
+        f"**Success rate thresholds:** rotation < {max_rot} deg, translation < {max_transl}",
         "",
         "---",
         "",
@@ -659,7 +657,7 @@ def generate_index_report(
         f"# Localization Comparison Index: {top_dir.name}",
         "",
         f"**Generated:** {now}  ",
-        f"**Success rate thresholds:** rotation < {max_rot} deg, translation < {max_transl} mm",
+        f"**Success rate thresholds:** rotation < {max_rot} deg, translation < {max_transl}",
         "",
         "---",
         "",
@@ -690,7 +688,7 @@ def generate_index_report(
     ]
     for d in comparison_dirs:
         ref_voxel = parse_refinement_voxel(d)
-        label = f"{ref_voxel} mm" if ref_voxel is not None else d.name
+        label = f"{ref_voxel}" if ref_voxel is not None else d.name
         rel_report = d.relative_to(top_dir) / "report.md"
         lines.append(f"| {label} | [{d.name}/report.md]({rel_report}) |")
 
@@ -742,7 +740,7 @@ def main() -> None:
         "--max-transl-err",
         type=float,
         default=DEFAULT_MAX_TRANSL_ERR_MM,
-        help="Translation error threshold in mm for success rate computation.",
+        help="Translation error threshold for success rate computation.",
     )
     parser.add_argument(
         "--log-level",

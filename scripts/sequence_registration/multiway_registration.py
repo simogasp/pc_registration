@@ -151,7 +151,7 @@ def build_initial_poses_from_registration(
             )
         if result.inlier_rmse > WARNING_RMSE_THRESHOLD_MM:
             logger.warning(
-                f"    WARNING: High RMSE ({result.inlier_rmse:.2f} mm) for consecutive "
+                f"    WARNING: High RMSE ({result.inlier_rmse:.4f}) for consecutive "
                 f"registration {i - 1} -> {i}. This may indicate poor alignment."
             )
 
@@ -238,7 +238,7 @@ def build_pose_graph(
             )
         if result.inlier_rmse > WARNING_RMSE_THRESHOLD_MM:
             logger.warning(
-                f"    WARNING: High RMSE ({result.inlier_rmse:.2f} mm) for odometry edge "
+                f"    WARNING: High RMSE ({result.inlier_rmse:.4f}) for odometry edge "
                 f"{source_id} -> {target_id}. This may indicate poor alignment."
             )
 
@@ -377,13 +377,13 @@ def create_fused_map(
 
     Args:
         transformed_scans: List of point clouds already in world frame.
-        voxel_size: Voxel size (mm) for the final downsampling step. Set to 0
+        voxel_size: Voxel size for the final downsampling step. Set to 0
             to skip downsampling.
         remove_outliers_flag: If True, remove outliers from fused map.
         outlier_nb_neighbors: Number of neighbors for statistical outlier removal.
         outlier_std_ratio: Standard deviation ratio threshold for outlier removal.
         filter_distant_flag: If True, filter out points too far from centroid.
-        max_distance: Maximum distance from centroid (mm). If None, uses percentile.
+        max_distance: Maximum distance from centroid. If None, uses percentile.
         distance_percentile: Distance percentile threshold (default: 99.0).
 
     Returns:
@@ -462,7 +462,7 @@ def multiway_registration(
         outlier_nb_neighbors: Number of neighbors for statistical outlier removal.
         outlier_std_ratio: Standard deviation ratio threshold for outlier removal.
         filter_distant_flag: If True, filter out points too far from centroid.
-        max_distance: Maximum distance from centroid (mm). If None, uses percentile.
+        max_distance: Maximum distance from centroid. If None, uses percentile.
         distance_percentile: Distance percentile threshold (default: 99.0).
         use_generalized_icp: If True, use GICP; otherwise use classic ICP.
     """
@@ -635,28 +635,28 @@ def main():
         "--voxel-size-input",
         type=float,
         default=50.0,
-        help="Voxel size (mm) for downsampling input scans (0 = no downsampling)",
+        help="Voxel size for downsampling input scans (0 = no downsampling)",
     )
 
     parser.add_argument(
         "--voxel-size-fusion",
         type=float,
         default=10.0,
-        help="Voxel size (mm) for final fused map downsampling",
+        help="Voxel size for final fused map downsampling",
     )
 
     parser.add_argument(
         "--max-correspondence-distance",
         type=float,
         default=150.0,
-        help="Maximum correspondence distance (mm) for ICP registration",
+        help="Maximum correspondence distance for ICP registration",
     )
 
     parser.add_argument(
         "--loop-closure-distance",
         type=float,
         default=None,
-        help="Distance threshold (mm) for loop closure detection (None = disabled)",
+        help="Distance threshold for loop closure detection (None = disabled)",
     )
 
     parser.add_argument(
@@ -716,7 +716,7 @@ def main():
         "--max-distance",
         type=float,
         default=None,
-        help="Maximum distance (mm) from centroid for filtering. If not specified, uses percentile",
+        help="Maximum distance from centroid for filtering. If not specified, uses percentile",
     )
 
     parser.add_argument(

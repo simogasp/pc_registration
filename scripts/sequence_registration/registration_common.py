@@ -260,7 +260,7 @@ def filter_distant_points(
 
     Args:
         pcd: Input point cloud.
-        max_distance: Maximum distance threshold (mm). If None, uses percentile-based filtering.
+        max_distance: Maximum distance threshold. If None, uses percentile-based filtering.
         percentile: Distance percentile to use as threshold (default: 99.0).
             Only used if max_distance is None. Points beyond this percentile are removed.
         use_centroid: If True, compute distances from centroid; if False, from origin.
@@ -286,12 +286,12 @@ def filter_distant_points(
     # Determine threshold
     if max_distance is not None:
         threshold = max_distance
-        logger.info(f"Filtering points beyond {threshold:.2f} mm from {ref_name}...")
+        logger.info(f"Filtering points beyond {threshold:.2f} from {ref_name}...")
     else:
         threshold = np.percentile(distances, percentile)
         logger.info(
             f"Filtering points beyond {percentile}th percentile "
-            f"({threshold:.2f} mm from {ref_name})..."
+            f"({threshold:.2f} from {ref_name})..."
         )
 
     # Filter points
@@ -320,9 +320,9 @@ def filter_distant_points(
         f"{len(filtered_points)} points remaining"
     )
     logger.info(
-        f"Distance statistics - Min: {distances.min():.2f} mm, "
-        f"Mean: {distances.mean():.2f} mm, Max: {distances.max():.2f} mm, "
-        f"Threshold: {threshold:.2f} mm"
+        f"Distance statistics - Min: {distances.min():.2f}, "
+        f"Mean: {distances.mean():.2f}, Max: {distances.max():.2f}, "
+        f"Threshold: {threshold:.2f}"
     )
 
     return filtered_pcd

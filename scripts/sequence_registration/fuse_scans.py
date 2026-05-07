@@ -98,7 +98,7 @@ def create_fused_map(
 
     Args:
         transformed_scans: List of transformed point clouds.
-        voxel_size: Voxel size for downsampling (default: 10.0 mm).
+        voxel_size: Voxel size for downsampling (default: 10.0).
 
     Returns:
         Fused and downsampled point cloud.
@@ -139,14 +139,14 @@ def fuse_scans(
     Args:
         data_dir: Directory containing .ply and .json scan pairs.
         output_dir: Directory where output maps will be saved.
-        voxel_size: Voxel size for downsampling in fused map (mm).
+        voxel_size: Voxel size for downsampling in fused map.
         skip_raw: If True, skip saving raw concatenated map.
         skip_fused: If True, skip saving fused map.
         remove_outliers_flag: If True, remove outliers from both raw and fused maps.
         outlier_nb_neighbors: Number of neighbors for statistical outlier removal.
         outlier_std_ratio: Standard deviation ratio threshold for outlier removal.
         filter_distant_flag: If True, filter out points that are too far from centroid.
-        max_distance: Maximum distance from centroid (mm). If None, uses percentile.
+        max_distance: Maximum distance from centroid. If None, uses percentile.
         distance_percentile: Distance percentile threshold (default: 99.0).
         start_scan: Index of first scan to process (0-based, inclusive). None = start from 0.
         end_scan: Index of last scan to process (0-based, inclusive). None = process until end.
@@ -305,7 +305,7 @@ def main():
         "--voxel-size",
         type=float,
         default=10.0,
-        help="Voxel size (mm) for downsampling in fused map",
+        help="Voxel size for downsampling in fused map",
     )
 
     parser.add_argument(
@@ -350,7 +350,7 @@ def main():
         "--max-distance",
         type=float,
         default=None,
-        help="Maximum distance (mm) from centroid for filtering. If not specified, uses percentile",
+        help="Maximum distance from centroid for filtering. If not specified, uses percentile",
     )
 
     parser.add_argument(

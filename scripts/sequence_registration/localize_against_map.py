@@ -228,7 +228,7 @@ def _load_scan_for_refinement(
     voxel_for_loading = (
         refinement_voxel_size if refinement_voxel_size is not None else 0.0
     )
-    res_label = f"{voxel_for_loading} mm" if voxel_for_loading > 0 else "original"
+    res_label = f"{voxel_for_loading}" if voxel_for_loading > 0 else "original"
     logger.debug(f"Loading scan at refinement resolution ({res_label})...")
     return load_point_cloud(ply_path, voxel_size=voxel_for_loading)
 
@@ -359,11 +359,11 @@ def process_single_scan(
     if reg_result is not None:
         logger.info("Localization Statistics:")
         logger.info(f"    Fitness:      {reg_result.fitness:.4f}")
-        logger.info(f"    Inlier RMSE:  {reg_result.inlier_rmse:.4f} mm")
+        logger.info(f"    Inlier RMSE:  {reg_result.inlier_rmse:.4f}")
 
     logger.info("Error vs Ground Truth:")
     logger.info(f"    Rotation error:    {rot_error:.4f}°")
-    logger.info(f"    Translation error: {trans_error:.4f} mm")
+    logger.info(f"    Translation error: {trans_error:.4f}")
 
     time_total_s = time.perf_counter() - t_total_start
     logger.info("Timing:")
@@ -393,7 +393,7 @@ def process_single_scan(
         "localization": localization_stats,
         "errors": {
             "rotation_degrees": float(rot_error),
-            "translation_mm": float(trans_error),
+            "translation": float(trans_error),
         },
         "timing": timing,
         "ground_truth_pose": H_gt.tolist(),
@@ -433,11 +433,11 @@ def _build_method_string(
         return "RANSAC-based global registration"
     refinement_name = "GICP" if use_gicp else "ICP"
     if refinement_voxel_size is None or refinement_voxel_size == voxel_size:
-        res_str = f"voxel={voxel_size} mm (same as RANSAC)"
+        res_str = f"voxel={voxel_size} (same as RANSAC)"
     elif refinement_voxel_size == 0:
         res_str = "original resolution"
     else:
-        res_str = f"voxel={refinement_voxel_size} mm"
+        res_str = f"voxel={refinement_voxel_size}"
     return f"RANSAC + {refinement_name} refinement ({res_str})"
 
 
@@ -601,16 +601,16 @@ def localize_scans(
             f"Global map (refinement): {len(global_map_refinement.points)} points"
         )
 
-    logger.info(f"Voxel size: {voxel_size} mm")
-    logger.info(f"Max correspondence distance: {max_correspondence_distance} mm")
+    logger.info(f"Voxel size: {voxel_size}")
+    logger.info(f"Max correspondence distance: {max_correspondence_distance}")
     logger.info(f"Method: {method_str}")
     if refine_poses:
-        logger.info(f"ICP refinement distance: {icp_refinement_distance} mm")
+        logger.info(f"ICP refinement distance: {icp_refinement_distance}")
     logger.info("=" * 80)
 
     # Statistics accumulators
     rotation_errors = []
-    translation_errors_mm = []
+    translation_errors = []
     fitness_scores = []
     rmse_values = []
     times_total_s = []
@@ -644,7 +644,7 @@ def localize_scans(
 
         # Store statistics
         rotation_errors.append(result["rotation_error"])
-        translation_errors_mm.append(result["translation_error"])
+        translation_errors.append(result["translation_error"])
         fitness_scores.append(result["fitness"])
         rmse_values.append(result["rmse"])
         times_total_s.append(result["time_total_s"])
@@ -669,9 +669,9 @@ def localize_scans(
         logger.info(f"  Max:    {stats['max']:.4f}{suffix}")
 
     _log_stats("Rotation Error", compute_stats(rotation_errors), "°")
-    _log_stats("Translation Error", compute_stats(translation_errors_mm), "mm")
+    _log_stats("Translation Error", compute_stats(translation_errors))
     _log_stats("Localization Fitness", compute_stats(fitness_scores))
-    _log_stats("Localization RMSE", compute_stats(rmse_values), "mm")
+    _log_stats("Localization RMSE", compute_stats(rmse_values))
     _log_stats("Total time per scan", compute_stats(times_total_s), "s")
     if times_ransac_s:
         _log_stats("RANSAC time per scan", compute_stats(times_ransac_s), "s")
@@ -706,9 +706,9 @@ def localize_scans(
             },
             "statistics": {
                 "rotation_error_degrees": compute_stats(rotation_errors),
-                "translation_error_mm": compute_stats(translation_errors_mm),
+                "translation_error": compute_stats(translation_errors),
                 "fitness": compute_stats(fitness_scores),
-                "inlier_rmse_mm": compute_stats(rmse_values),
+                "inlier_rmse": compute_stats(rmse_values),
                 "timing": {
                     "total_s": compute_stats(times_total_s),
                     "ransac_s": compute_stats(times_ransac_s)
@@ -721,7 +721,7 @@ def localize_scans(
             },
             "num_scans": num_scans,
             "rotation_errors": rotation_errors,
-            "translation_errors": translation_errors_mm,
+            "translation_errors": translation_errors,
             "results": results,
         }
 
@@ -765,14 +765,14 @@ def main():
         "--voxel-size",
         type=float,
         default=50.0,
-        help="Voxel size (mm) for downsampling scans and map (0 = no downsampling)",
+        help="Voxel size for downsampling scans and map (0 = no downsampling)",
     )
 
     parser.add_argument(
         "--max-correspondence-distance",
         type=float,
         default=150.0,
-        help="Maximum correspondence distance (mm) for RANSAC localization",
+        help="Maximum correspondence distance for RANSAC localization",
     )
 
     parser.add_argument(
@@ -820,7 +820,7 @@ def main():
         "--icp-refinement-distance",
         type=float,
         default=50.0,
-        help="Maximum correspondence distance (mm) for ICP/GICP refinement",
+        help="Maximum correspondence distance for ICP/GICP refinement",
     )
 
     parser.add_argument(
@@ -834,7 +834,7 @@ def main():
         type=float,
         default=None,
         help=(
-            "Voxel size (mm) for downsampling during the ICP/GICP refinement step. "
+            "Voxel size for downsampling during the ICP/GICP refinement step. "
             "If not set, the RANSAC voxel size is reused (no extra loading). "
             "Set to 0 to use the original undownsampled point clouds."
         ),

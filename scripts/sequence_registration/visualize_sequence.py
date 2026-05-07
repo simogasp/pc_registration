@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 # Animation parameters
 DEFAULT_ANIMATION_SPEED = 1.0  # seconds per frame
-COORDINATE_FRAME_SIZE = 500.0  # mm
+COORDINATE_FRAME_SIZE = 500.0  # default coordinate frame axis length
 
 
 def calculate_trajectory_length(points: np.ndarray) -> float:
@@ -58,7 +58,7 @@ def calculate_trajectory_length(points: np.ndarray) -> float:
         points: Nx3 numpy array of 3D points.
 
     Returns:
-        Total length in mm (sum of distances between consecutive points).
+        Total length (sum of distances between consecutive points).
     """
     if len(points) < 2:
         return 0.0
@@ -126,8 +126,8 @@ class SequenceVisualizer:
 
         # Fused map downsampling controls
         self.downsample_enabled = False
-        self.voxel_size = 10.0  # 10mm default (data is in mm)
-        self.voxel_size_step = 5.0  # 5mm increment
+        self.voxel_size = 10.0  # default voxel size for fused map display
+        self.voxel_size_step = 5.0  # increment per key press
 
         # Load poses from file if provided
         self.poses = None
@@ -214,7 +214,7 @@ class SequenceVisualizer:
         # Calculate and log trajectory length
         trajectory_length = calculate_trajectory_length(trajectory_points_array)
         logger.info(f"Created trajectory with {len(trajectory_points)} points")
-        logger.info(f"Trajectory length: {trajectory_length:.2f} mm")
+        logger.info(f"Trajectory length: {trajectory_length:.2f}")
 
     def _load_fused_map(self, fused_map_path: str):
         """Load the fused map from file."""
@@ -248,7 +248,7 @@ class SequenceVisualizer:
         """Create a coordinate frame mesh.
 
         Args:
-            size: Size of the coordinate frame axes in mm.
+            size: Size of the coordinate frame axes.
 
         Returns:
             TriangleMesh representing the coordinate frame.
@@ -471,7 +471,7 @@ class SequenceVisualizer:
             num_points = len(self.fused_map_geometry.points)
             num_original = len(self.fused_map_geometry_original.points)
             logger.info(
-                f"Downsampling: ON | Voxel: {self.voxel_size:.1f}mm | Points: {num_points}/{num_original}"
+                f"Downsampling: ON | Voxel: {self.voxel_size:.1f} | Points: {num_points}/{num_original}"
             )
         else:
             # Create a copy of the original and paint it

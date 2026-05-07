@@ -48,9 +48,9 @@ def load_localization_results(json_file: Path) -> dict:
     logger.info(f"  Map file: {params.get('map_file', 'N/A')}")
     logger.info(f"  Number of scans: {data.get('num_scans', 0)}")
     logger.info(f"  Method: {params.get('method', 'N/A')}")
-    logger.info(f"  Voxel size: {params.get('voxel_size', 'N/A')} mm")
+    logger.info(f"  Voxel size: {params.get('voxel_size', 'N/A')}")
     logger.info(
-        f"  Max correspondence distance: {params.get('max_correspondence_distance', 'N/A')} mm"
+        f"  Max correspondence distance: {params.get('max_correspondence_distance', 'N/A')}"
     )
 
     return data

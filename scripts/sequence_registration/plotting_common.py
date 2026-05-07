@@ -106,7 +106,7 @@ def create_error_histograms(
 
     Args:
         rotation_errors: List of rotation errors in degrees.
-        translation_errors: List of translation errors in mm.
+        translation_errors: List of translation errors.
         output_dir: Directory where to save the plots.
         rotation_title: Title for rotation error histogram.
         translation_title: Title for translation error histogram.
@@ -135,7 +135,7 @@ def create_error_histograms(
     create_histogram(
         translation_errors,
         title=translation_title,
-        xlabel="Translation Error (mm)",
+        xlabel="Translation Error",
         output_path=translation_output,
         bins=30,
         color="#3498db",
@@ -232,7 +232,7 @@ def create_grouped_boxplot(
 
     # Labels and title
     ax.set_ylabel(metric_label, fontsize=12)
-    ax.set_xlabel("Voxel Size (mm)", fontsize=12)
+    ax.set_xlabel("Voxel Size", fontsize=12)
     ax.set_title(title, fontsize=14, fontweight="bold")
     ax.grid(True, alpha=0.3, axis="y")
 
@@ -315,7 +315,7 @@ def create_grouped_barplot(
     ax.set_xticklabels(group_labels, rotation=0)
     ax.set_ylim(0, 115)
     ax.set_ylabel(metric_label, fontsize=12)
-    ax.set_xlabel("Voxel Size (mm)", fontsize=12)
+    ax.set_xlabel("Voxel Size", fontsize=12)
     ax.set_title(title, fontsize=14, fontweight="bold")
     ax.grid(True, alpha=0.3, axis="y")
     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.0f}%"))
