@@ -301,8 +301,14 @@ def main(args: argparse.Namespace):
             - target: Path to target point cloud file
             - voxel_size: Voxel size for downsampling
             - max_iter_icp: Maximum iterations for ICP (currently unused)
+            - refinement_voxel_size: Voxel size for downsampling during the ICP/GICP refinement step
     """
     voxel_size = args.voxel_size
+    refinement_voxel_size = (
+        args.refinement_voxel_size
+        if args.refinement_voxel_size is not None
+        else voxel_size
+    )
     frame_size = rough_scale_point_cloud_from_file(args.source)
     min_fitness = args.min_fitness
 
@@ -405,7 +411,7 @@ def main(args: argparse.Namespace):
     )
 
     result_icp = refine_registration(
-        source, target, voxel_size, result_ransac.transformation
+        source, target, refinement_voxel_size, result_ransac.transformation
     )
     logger.info(f"ICP refinement result: {result_icp}")
     logger.info(f"Estimated matrix:\n{result_icp.transformation}")
@@ -461,6 +467,17 @@ if __name__ == "__main__":
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="INFO",
         help="Set logging level (default: WARNING)",
+    )
+
+    parser.add_argument(
+        "--refinement-voxel-size",
+        type=float,
+        default=None,
+        help=(
+            "Voxel size for downsampling during the ICP/GICP refinement step. "
+            "If not set, the RANSAC voxel size is reused."
+            "Set to 0 to use the original undownsampled point clouds."
+        ),
     )
 
     input_args = parser.parse_args()
