@@ -48,7 +48,45 @@ logger = logging.getLogger(__name__)
 
 # Animation parameters
 DEFAULT_ANIMATION_SPEED = 1.0  # seconds per frame
-COORDINATE_FRAME_SIZE = 500.0  # default coordinate frame axis length
+COORDINATE_FRAME_SIZE = 500.0  # fallback coordinate frame axis length
+FRAME_SIZE_FRACTION = 0.1  # frame size as a fraction of the scan bounding box extent
+
+
+def estimate_coordinate_frame_size(ply_path: Path) -> float:
+    """Estimate a suitable coordinate frame axis length from a point cloud file.
+
+    Loads the point cloud, computes its axis-aligned bounding box, and returns
+    a fraction of the largest extent as the frame size. Falls back to
+    COORDINATE_FRAME_SIZE if the file cannot be read or has no points.
+
+    Args:
+        ply_path: Path to a PLY point cloud file.
+
+    Returns:
+        Estimated coordinate frame axis length.
+    """
+    try:
+        pcd = o3d.io.read_point_cloud(str(ply_path))
+        if not pcd.has_points():
+            logger.warning(
+                f"Cannot estimate frame size: {ply_path} has no points. "
+                f"Using fallback size {COORDINATE_FRAME_SIZE}."
+            )
+            return COORDINATE_FRAME_SIZE
+
+        aabb = pcd.get_axis_aligned_bounding_box()
+        max_extent = float(np.max(aabb.get_extent()))
+        frame_size = max_extent * FRAME_SIZE_FRACTION
+        logger.info(
+            f"Estimated frame size {frame_size:.2f} (scan max extent: {max_extent:.2f})"
+        )
+        return frame_size
+    except Exception as e:
+        logger.warning(
+            f"Could not estimate frame size from {ply_path}: {e}. "
+            f"Using fallback size {COORDINATE_FRAME_SIZE}."
+        )
+        return COORDINATE_FRAME_SIZE
 
 
 def calculate_trajectory_length(points: np.ndarray) -> float:
@@ -137,6 +175,10 @@ class SequenceVisualizer:
                 logger.warning(
                     "Failed to load poses file, falling back to individual JSON files"
                 )
+
+        # Estimate coordinate frame size from the first scan
+        first_ply_path, _ = self.scan_pairs[0]
+        self.frame_size = estimate_coordinate_frame_size(first_ply_path)
 
         # Load all transformations to build trajectory
         self._load_trajectory()
@@ -244,15 +286,17 @@ class SequenceVisualizer:
             f"Loaded fused map with {num_points} points (downsampling: OFF, use D to toggle)"
         )
 
-    def _create_coordinate_frame(self, size: float = COORDINATE_FRAME_SIZE):
+    def _create_coordinate_frame(self, size: Optional[float] = None):
         """Create a coordinate frame mesh.
 
         Args:
-            size: Size of the coordinate frame axes.
+            size: Size of the coordinate frame axes. Defaults to self.frame_size.
 
         Returns:
             TriangleMesh representing the coordinate frame.
         """
+        if size is None:
+            size = self.frame_size
         return o3d.geometry.TriangleMesh.create_coordinate_frame(size=size)
 
     def _load_scan_at_index(self, scan_idx: int):
