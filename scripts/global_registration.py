@@ -204,48 +204,105 @@ def execute_global_registration(
     return result
 
 
-def refine_registration(
+def _refine_registration_icp(
     source: o3d.geometry.PointCloud,
     target: o3d.geometry.PointCloud,
-    voxel_size: float,
+    distance_threshold: float,
     initial_transformation: np.ndarray,
 ) -> o3d.pipelines.registration.RegistrationResult:
-    """Refine registration using point-to-plane ICP algorithm.
+    """Refine registration using point-to-plane ICP.
 
-    Performs Iterative Closest Point (ICP) registration with point-to-plane metric
-    to refine the initial alignment obtained from global registration. This method
-    uses a stricter distance threshold and operates on the original (non-downsampled)
-    point clouds for higher accuracy.
+    Estimates target normals if not already present.
 
     Args:
-        source: Original source point cloud.
-        target: Original target point cloud.
-        voxel_size: The voxel size, used to compute a strict distance threshold.
-        initial_transformation: Initial transformation matrix from global registration.
+        source: Source point cloud.
+        target: Target point cloud.
+        distance_threshold: Maximum correspondence distance.
+        initial_transformation: Initial transformation from global registration.
 
     Returns:
-        Registration result containing the refined transformation matrix, fitness score,
-        and inlier RMSE from the point-to-plane ICP registration.
+        Registration result from point-to-plane ICP.
     """
-    distance_threshold = voxel_size * 0.4
-    logger.info("Point-to-plane ICP registration is applied on original point clouds")
-    logger.info(
-        f"to refine the alignment. This time we use a strict distance threshold {distance_threshold:.3f}"
-    )
     if not target.has_normals():
         logger.info("Target point cloud does not have normals, estimating them...")
+        radius_normal = distance_threshold * 2
         target.estimate_normals(
-            o3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=30)
-        )  # @TODO check radius parameter wrt the size of the model/voxel
+            o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
+        )
 
-    result = o3d.pipelines.registration.registration_icp(
+    return o3d.pipelines.registration.registration_icp(
         source,
         target,
         distance_threshold,
         initial_transformation,
         o3d.pipelines.registration.TransformationEstimationPointToPlane(),
     )
-    return result
+
+
+def _refine_registration_gicp(
+    source: o3d.geometry.PointCloud,
+    target: o3d.geometry.PointCloud,
+    distance_threshold: float,
+    initial_transformation: np.ndarray,
+) -> o3d.pipelines.registration.RegistrationResult:
+    """Refine registration using Generalized ICP (GICP).
+
+    Args:
+        source: Source point cloud.
+        target: Target point cloud.
+        distance_threshold: Maximum correspondence distance.
+        initial_transformation: Initial transformation from global registration.
+
+    Returns:
+        Registration result from GICP.
+    """
+    return o3d.pipelines.registration.registration_generalized_icp(
+        source,
+        target,
+        distance_threshold,
+        initial_transformation,
+        o3d.pipelines.registration.TransformationEstimationForGeneralizedICP(),
+    )
+
+
+def refine_registration(
+    source: o3d.geometry.PointCloud,
+    target: o3d.geometry.PointCloud,
+    voxel_size: float,
+    initial_transformation: np.ndarray,
+    use_gicp: bool = False,
+) -> o3d.pipelines.registration.RegistrationResult:
+    """Refine registration using ICP or GICP.
+
+    Dispatches to point-to-plane ICP or Generalized ICP (GICP) based on
+    the use_gicp flag. Both methods use a strict distance threshold derived
+    from the voxel size and operate on the provided (typically full-resolution)
+    point clouds for higher accuracy.
+
+    Args:
+        source: Source point cloud.
+        target: Target point cloud.
+        voxel_size: Voxel size used to compute the correspondence distance
+            threshold (threshold = voxel_size * 0.4).
+        initial_transformation: Initial transformation matrix from global registration.
+        use_gicp: If True, use Generalized ICP; otherwise use point-to-plane ICP.
+
+    Returns:
+        Registration result containing the refined transformation matrix, fitness
+        score, and inlier RMSE.
+    """
+    distance_threshold = voxel_size * 0.4
+    algorithm_name = "Generalized ICP (GICP)" if use_gicp else "Point-to-plane ICP"
+    logger.info(f"{algorithm_name} refinement on original point clouds")
+    logger.info(f"Using strict distance threshold {distance_threshold:.3f}")
+
+    if use_gicp:
+        return _refine_registration_gicp(
+            source, target, distance_threshold, initial_transformation
+        )
+    return _refine_registration_icp(
+        source, target, distance_threshold, initial_transformation
+    )
 
 
 def gravity_transformation(
@@ -413,15 +470,24 @@ def main(args: argparse.Namespace):
     )
 
     result_icp = refine_registration(
-        source, target, refinement_voxel_size, result_ransac.transformation
+        source,
+        target,
+        refinement_voxel_size,
+        result_ransac.transformation,
+        use_gicp=args.use_gicp,
     )
-    logger.info(f"ICP refinement result: {result_icp}")
+    refinement_label = "GICP" if args.use_gicp else "ICP"
+    logger.info(f"{refinement_label} refinement result: {result_icp}")
     logger.info(f"Estimated matrix:\n{result_icp.transformation}")
     logger.info(
         f"Result fitness: {result_icp.fitness}, inlier RMSE: {result_icp.inlier_rmse}"
     )
     draw_registration_result(
-        source, target, result_icp.transformation, "ICP refinement", size=frame_size
+        source,
+        target,
+        result_icp.transformation,
+        f"{refinement_label} refinement",
+        size=frame_size,
     )
     logger.debug(f"init mat:\n{trans_init}")
     logger.debug(
@@ -469,6 +535,13 @@ if __name__ == "__main__":
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="INFO",
         help="Set logging level (default: WARNING)",
+    )
+
+    parser.add_argument(
+        "--use-gicp",
+        action="store_true",
+        default=False,
+        help="Use Generalized ICP (GICP) instead of point-to-plane ICP for refinement",
     )
 
     parser.add_argument(
