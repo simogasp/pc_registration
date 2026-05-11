@@ -436,7 +436,7 @@ def main(args: argparse.Namespace):
             args.max_iter_icp,
         )
 
-        global_attempts += 1    
+        global_attempts += 1
         logger.info(f"RANSAC attempt {global_attempts} result: {result_ransac}")
 
         # check if the solution is correct wrt the gravity direction, we want to discard solutions that are upside down
