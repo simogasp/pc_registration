@@ -16,10 +16,40 @@ logger = logging.getLogger(__name__)
 
 # Normal estimation parameters
 NORMAL_ESTIMATION_RADIUS_MULTIPLIER = 2  # Multiplier for voxel size to determine radius
-DEFAULT_NORMAL_ESTIMATION_RADIUS_MM = (
-    100.0  # Default radius when no voxel size specified
-)
+# Fraction of the oriented bounding box diagonal used as the normal estimation radius
+# when voxel_size=0 (downsampling disabled). This is scale-independent and avoids
+# hardcoding a unit-specific fallback value.
+NORMAL_ESTIMATION_RADIUS_FRACTION = 0.01
 NORMAL_ESTIMATION_MAX_NEIGHBORS = 30  # Maximum nearest neighbors for normal estimation
+
+
+def compute_normal_estimation_radius(
+    pcd: o3d.geometry.PointCloud, voxel_size: float
+) -> float:
+    """Compute a scale-invariant normal estimation search radius.
+
+    When downsampling is active (voxel_size > 0) the radius is derived from
+    the voxel size via NORMAL_ESTIMATION_RADIUS_MULTIPLIER, which is the
+    standard Open3D convention.
+
+    When no downsampling is used (voxel_size == 0) the radius is computed as
+    NORMAL_ESTIMATION_RADIUS_FRACTION of the oriented bounding box (OBB)
+    diagonal. This makes the radius proportional to the actual extent of the
+    point cloud and independent of the unit system.
+
+    Args:
+        pcd: Point cloud for which to compute the radius.
+        voxel_size: Voxel size used for downsampling (0 if no downsampling).
+
+    Returns:
+        Normal estimation search radius.
+    """
+    if voxel_size > 0:
+        return voxel_size * NORMAL_ESTIMATION_RADIUS_MULTIPLIER
+
+    obb = pcd.get_oriented_bounding_box()
+    diagonal = float(np.linalg.norm(obb.extent))
+    return diagonal * NORMAL_ESTIMATION_RADIUS_FRACTION
 
 
 def find_scan_pairs(data_dir: Path) -> List[Tuple[Path, Path]]:
@@ -140,11 +170,7 @@ def load_point_cloud(
 
     # Estimate normals if not present
     if estimate_normals and not pcd.has_normals():
-        radius = (
-            voxel_size * NORMAL_ESTIMATION_RADIUS_MULTIPLIER
-            if voxel_size > 0
-            else DEFAULT_NORMAL_ESTIMATION_RADIUS_MM
-        )
+        radius = compute_normal_estimation_radius(pcd, voxel_size)
         pcd.estimate_normals(
             search_param=o3d.geometry.KDTreeSearchParamHybrid(
                 radius=radius, max_nn=NORMAL_ESTIMATION_MAX_NEIGHBORS
