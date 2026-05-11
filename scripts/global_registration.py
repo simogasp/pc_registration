@@ -24,6 +24,7 @@ from registration.visualization.viewer import (
 from registration.utils.point_cloud import (
     rough_scale_point_cloud,
     rough_scale_point_cloud_from_file,
+    # align_centers_from_files,
 )
 
 logger = logging.getLogger(__name__)
