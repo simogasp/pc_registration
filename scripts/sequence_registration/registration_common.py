@@ -45,7 +45,17 @@ def find_scan_pairs(data_dir: Path) -> List[Tuple[Path, Path]]:
     pairs = []
     for stem in sorted(ply_dict.keys(), key=lambda x: int(x) if x.isdigit() else x):
         if stem not in json_dict:
-            raise ValueError(f"Missing JSON file for {ply_dict[stem]}")
+            # try using adding _pose suffix to match JSON files that have this convention
+            test_stem = f"{stem}_pose"
+            if test_stem in json_dict:
+                pairs.append((ply_dict[stem], json_dict[test_stem]))
+                logger.warning(
+                    f"Matched {ply_dict[stem].name} to {json_dict[test_stem].name} "
+                    f"using fallback stem '{test_stem}' (original stem '{stem}' not found in JSON files)"
+                )
+                continue
+            else:
+                raise ValueError(f"Missing JSON file for {ply_dict[stem]}")
         pairs.append((ply_dict[stem], json_dict[stem]))
 
     logger.info(f"Found {len(pairs)} matching scan pairs")
