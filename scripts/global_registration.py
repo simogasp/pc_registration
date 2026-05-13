@@ -306,6 +306,60 @@ def refine_registration(
     )
 
 
+def fuse_point_clouds(
+    source: o3d.geometry.PointCloud,
+    target: o3d.geometry.PointCloud,
+    transformation: np.ndarray,
+    voxel_size: float = 0.0,
+) -> o3d.geometry.PointCloud:
+    """Merge source and target into a single fused point cloud.
+
+    The source is brought into the target frame using the provided transformation,
+    then the two clouds are concatenated. An optional voxel downsampling is applied
+    to reduce redundancy.
+
+    Args:
+        source: Source point cloud (will be transformed).
+        target: Target point cloud (reference frame).
+        transformation: 4x4 matrix that maps source into target frame.
+        voxel_size: If > 0, downsample the fused cloud with this voxel size.
+
+    Returns:
+        Fused point cloud in the target reference frame.
+    """
+    import copy
+
+    source_aligned = copy.deepcopy(source)
+    source_aligned.transform(transformation)
+
+    fused = source_aligned + target
+    logger.info(f"Fused cloud: {len(fused.points)} points")
+
+    if voxel_size > 0:
+        fused = fused.voxel_down_sample(voxel_size)
+        logger.info(
+            f"After voxel downsampling (size={voxel_size}): {len(fused.points)} points"
+        )
+
+    return fused
+
+
+def save_fused_map(fused: o3d.geometry.PointCloud, output_path: str) -> None:
+    """Save a fused point cloud to a PLY file in binary format.
+
+    Args:
+        fused: Fused point cloud to save.
+        output_path: Destination file path (should end with .ply).
+
+    Raises:
+        IOError: If Open3D reports a write failure.
+    """
+    success = o3d.io.write_point_cloud(output_path, fused, write_ascii=False)
+    if not success:
+        raise IOError(f"Failed to write fused map to {output_path}")
+    logger.info(f"Saved fused map to {output_path}")
+
+
 def gravity_transformation(
     gravity_direction: np.ndarray, gravity_axis: int = 1
 ) -> np.ndarray:
@@ -360,6 +414,8 @@ def main(args: argparse.Namespace):
             - voxel_size: Voxel size for downsampling
             - max_iter_icp: Maximum iterations for ICP (currently unused)
             - refinement_voxel_size: Voxel size for downsampling during the ICP/GICP refinement step
+            - fused_map: Optional output path for the fused point cloud
+            - voxel_size_fusion: Voxel size for downsampling the fused map
     """
     voxel_size = args.voxel_size
     refinement_voxel_size = (
@@ -508,6 +564,17 @@ def main(args: argparse.Namespace):
     )
     logger.info(f"Registration RMSE: {registration_rmse}")
 
+    if args.fused_map:
+        source_full = o3d.io.read_point_cloud(args.source)
+        target_full = o3d.io.read_point_cloud(args.target)
+        voxel_size_fusion = (
+            args.voxel_size_fusion if args.voxel_size_fusion is not None else 0.0
+        )
+        fused = fuse_point_clouds(
+            source_full, target_full, result_icp.transformation, voxel_size_fusion
+        )
+        save_fused_map(fused, args.fused_map)
+
 
 if __name__ == "__main__":
     # tutorial from here https://www.open3d.org/docs/0.10.0/tutorial/Advanced/global_registration.html#:~:text=We%20down%20sample%20the%20point,with%20similar%20local%20geometric%20structures
@@ -536,6 +603,20 @@ if __name__ == "__main__":
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="INFO",
         help="Set logging level (default: WARNING)",
+    )
+
+    parser.add_argument(
+        "--fused-map",
+        type=str,
+        default=None,
+        help="Output path for the fused point cloud (PLY). When set, the registered source and target are merged and saved here.",
+    )
+
+    parser.add_argument(
+        "--voxel-size-fusion",
+        type=float,
+        default=None,
+        help="Voxel size for downsampling the fused map. If not set, no downsampling is applied.",
     )
 
     parser.add_argument(
