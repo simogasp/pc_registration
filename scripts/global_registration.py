@@ -123,9 +123,14 @@ def prepare_dataset(
     """
     logger.info("Load two point clouds and disturb initial pose")
     source: o3d.geometry.PointCloud = o3d.io.read_point_cloud(source_file)
+    # if failed to read the point cloud, raise an error
+    if source.is_empty():
+        raise RuntimeError(f"Failed to read source point cloud from {source_file}")
     source.transform(correction)
     print_point_cloud_info(source, f"Source: {source_file}")
     target: o3d.geometry.PointCloud = o3d.io.read_point_cloud(target_file)
+    if target.is_empty():
+        raise RuntimeError(f"Failed to read target point cloud from {target_file}")
     target.transform(correction)
     print_point_cloud_info(target, f"Target: {target_file}")
     # trans_init = np.asarray([[0.0, 0.0, 1.0, 0.0],

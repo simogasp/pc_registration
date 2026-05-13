@@ -56,6 +56,8 @@ def rough_scale_point_cloud_from_file(pcd_filename: str) -> float:
         >>> print(f"Point cloud scale: {scale}")
     """
     pcd = o3d.io.read_point_cloud(pcd_filename)
+    if pcd.is_empty():
+        raise RuntimeError(f"Failed to read point cloud from {pcd_filename}")
     return rough_scale_point_cloud(pcd)
 
 
