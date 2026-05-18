@@ -1,5 +1,7 @@
 """Unit tests for axis-constrained rigid transformation estimation."""
 
+from typing import TypedDict
+
 import numpy as np
 import open3d as o3d
 import pytest
@@ -16,6 +18,28 @@ from registration.utils.transforms import (
     rotation_matrix_from_axis_angle,
     rototranslation_from_rotation_translation,
 )
+
+
+# ---------------------------------------------------------------------------
+# Test-case TypedDicts
+# ---------------------------------------------------------------------------
+
+
+class _AngleCase(TypedDict):
+    angle: float
+    description: str
+
+
+class _TransformCase(TypedDict):
+    description: str
+    axis: np.ndarray
+    angle: float
+    translation: np.ndarray
+
+
+class _CorresCase(TypedDict):
+    n_corres: int
+    description: str
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +211,7 @@ class TestEstimateRotationAngleAroundAxis:
     def test_known_angle_around_z_axis(self):
         """Rotate source points by a known angle around z and recover it."""
         unit_axis = np.array([0.0, 0.0, 1.0])
-        test_cases = [
+        test_cases: list[_AngleCase] = [
             {"angle": np.pi / 4, "description": "45 degrees around z"},
             {"angle": np.pi / 2, "description": "90 degrees around z"},
             {"angle": -np.pi / 3, "description": "-60 degrees around z"},
@@ -195,7 +219,7 @@ class TestEstimateRotationAngleAroundAxis:
         source = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [-1.0, 0.5, 0.0]])
 
         for case in test_cases:
-            angle_gt = case["angle"]
+            angle_gt = float(case["angle"])
             R = rotation_matrix_from_axis_angle(unit_axis, angle_gt)
             target = (R @ source.T).T
 
@@ -267,7 +291,7 @@ class TestEstimateConstrainedRototranslation:
 
     def test_various_known_transformations(self):
         """Data-driven test: recover known axis-constrained transformations."""
-        test_cases = [
+        test_cases: list[_TransformCase] = [
             {
                 "description": "identity: zero rotation, zero translation",
                 "axis": np.array([0.0, 0.0, 1.0]),
@@ -369,7 +393,7 @@ class TestEstimateConstrainedRototranslation:
         target_pcd = _make_point_cloud(SOURCE_POINTS)
         axis = np.array([0.0, 0.0, 1.0])
 
-        test_cases = [
+        test_cases: list[_CorresCase] = [
             {"n_corres": 0, "description": "zero correspondences"},
             {"n_corres": 1, "description": "one correspondence"},
         ]
@@ -468,7 +492,7 @@ class TestAxisConstrainedTransformationEstimation:
 
     def test_compute_transformation_various_axes(self):
         """Data-driven: compute_transformation recovers known transforms for various axes."""
-        test_cases = [
+        test_cases: list[_TransformCase] = [
             {
                 "description": "z-axis 90 degrees with translation",
                 "axis": np.array([0.0, 0.0, 1.0]),
