@@ -265,7 +265,7 @@ def remove_outliers(
         f"Removing outliers (nb_neighbors={nb_neighbors}, std_ratio={std_ratio})..."
     )
 
-    cleaned_pcd, inlier_indices = pcd.remove_statistical_outlier(
+    cleaned_pcd, _ = pcd.remove_statistical_outlier(
         nb_neighbors=nb_neighbors, std_ratio=std_ratio
     )
 

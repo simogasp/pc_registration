@@ -274,7 +274,7 @@ def transformation_error(t_est: np.ndarray, t_gt: np.ndarray) -> Tuple[float, fl
     rot_gt = t_gt[:3, :3]
     tra_gt = t_gt[:3, 3]
     rot_err = rotation_error_angle(rot_est, rot_gt)
-    trans_err, trans_vec = translation_error(rot_est, tra_est, rot_gt, tra_gt)
+    trans_err, _ = translation_error(rot_est, tra_est, rot_gt, tra_gt)
     return rot_err, trans_err
 
 
@@ -288,7 +288,7 @@ def generate_random_rotation_matrix() -> np.ndarray:
     """
     random_state = np.random.default_rng()
     A = random_state.normal(size=(3, 3))
-    Q, R = np.linalg.qr(A)
+    Q, _ = np.linalg.qr(A)
 
     # Ensure a proper rotation (det(Q) = +1)
     if np.linalg.det(Q) < 0:

@@ -67,7 +67,7 @@ def fit_cylinder(vertices: np.ndarray) -> Tuple[Dict, list]:
     """
     # Estimate axis via PCA
     pts_mean = vertices.mean(axis=0)
-    u, s, vh = np.linalg.svd(vertices - pts_mean)
+    _, _, vh = np.linalg.svd(vertices - pts_mean)
     axis = vh[0]
 
     # Distance from axis gives radius

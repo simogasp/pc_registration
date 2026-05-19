@@ -34,12 +34,10 @@ def create_histogram(
         bins: Number of histogram bins.
         color: Color for histogram bars.
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    _, ax = plt.subplots(figsize=(10, 6))
 
     # Create histogram
-    n, bins_edges, patches = ax.hist(
-        values, bins=bins, color=color, alpha=0.7, edgecolor="black", linewidth=0.5
-    )
+    ax.hist(values, bins=bins, color=color, alpha=0.7, edgecolor="black", linewidth=0.5)
 
     # Add vertical lines for mean and median
     mean_val = float(np.mean(values))
@@ -163,7 +161,7 @@ def create_grouped_boxplot(
         colors: Dictionary mapping category labels to colors.
         title: Plot title.
     """
-    fig, ax = plt.subplots(figsize=(14, 7))
+    _, ax = plt.subplots(figsize=(14, 7))
 
     positions = []
     bxp_stats = []

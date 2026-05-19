@@ -183,7 +183,7 @@ class TestComputeRMSEBetweenPointClouds:
         #          = sqrt(4 + 16 + 36) = sqrt(56)
         expected_rmse = np.sqrt(56)
 
-        rmse, distances = compute_rmse_between_point_clouds(source, target)
+        rmse, _ = compute_rmse_between_point_clouds(source, target)
 
         assert np.isclose(rmse, expected_rmse, atol=1e-6)
 

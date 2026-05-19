@@ -115,7 +115,7 @@ def create_comparison_boxplot(
         set(vs for step_data in data.values() for vs in step_data.keys())
     )
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    _, ax = plt.subplots(figsize=(12, 6))
 
     # Prepare box plot data using pre-computed statistics
     positions = []

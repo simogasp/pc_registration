@@ -61,7 +61,7 @@ def fit_cylinder(pcd: o3d.geometry.PointCloud) -> Tuple[Dict, list]:
 
     # Estimate axis via PCA
     pts_mean = pts.mean(axis=0)
-    u, s, vh = np.linalg.svd(pts - pts_mean)
+    _, _, vh = np.linalg.svd(pts - pts_mean)
     axis = vh[0]
 
     # Distance from axis gives radius
