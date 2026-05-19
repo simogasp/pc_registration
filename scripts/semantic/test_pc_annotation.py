@@ -115,27 +115,33 @@ def verify_planar_obb(
         True if all verifications pass.
 
     Raises:
-        AssertionError: If any verification fails.
+        ValueError: If any verification fails.
     """
     extents = obb["extents"]
 
     # All extents should be positive
-    assert extents[0] > 0, f"{plane_name}: U-extent should be positive"
-    assert extents[1] > 0, f"{plane_name}: V-extent should be positive"
-    assert extents[2] > 0, f"{plane_name}: Normal extent should be positive"
+    if extents[0] <= 0:
+        raise ValueError(f"{plane_name}: U-extent should be positive")
+    if extents[1] <= 0:
+        raise ValueError(f"{plane_name}: V-extent should be positive")
+    if extents[2] <= 0:
+        raise ValueError(f"{plane_name}: Normal extent should be positive")
 
     # Normal extent should match expected value (2 * margin)
-    assert np.isclose(extents[2], expected_normal_extent, rtol=1e-10), (
-        f"{plane_name}: Normal extent should be {expected_normal_extent}, "
-        f"got {extents[2]}"
-    )
+    if not np.isclose(extents[2], expected_normal_extent, rtol=1e-10):
+        raise ValueError(
+            f"{plane_name}: Normal extent should be {expected_normal_extent}, "
+            f"got {extents[2]}"
+        )
 
     # Center should be a valid 3D point
-    assert len(obb["center"]) == 3, f"{plane_name}: Center should be 3D"
+    if len(obb["center"]) != 3:
+        raise ValueError(f"{plane_name}: Center should be 3D")
 
     # Axes should be a 3x3 matrix
     axes = np.array(obb["axes"])
-    assert axes.shape == (3, 3), f"{plane_name}: Axes should be 3x3 matrix"
+    if axes.shape != (3, 3):
+        raise ValueError(f"{plane_name}: Axes should be 3x3 matrix")
 
     return True
 
@@ -260,8 +266,10 @@ def test_3d_obb_fallback() -> bool:
 
         # Verify basic properties
         extents = obb["extents"]
-        assert len(extents) == 3, "OBB should have 3 extents"
-        assert all(e > 0 for e in extents), "All extents should be positive"
+        if len(extents) != 3:
+            raise ValueError("OBB should have 3 extents")
+        if not all(e > 0 for e in extents):
+            raise ValueError("All extents should be positive")
 
         return True
 
