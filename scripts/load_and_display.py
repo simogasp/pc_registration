@@ -51,7 +51,7 @@ class PointCloudViewer:
         self.pcd.paint_uniform_color([1, 0.706, 0])  # yellow
 
         # Create visualizer
-        self.vis = o3d.visualization.VisualizerWithKeyCallback()  # type: ignore[attr-defined]
+        self.vis = o3d.visualization.VisualizerWithKeyCallback()  # type: ignore[attr-defined]  # ty: ignore[possibly-missing-submodule]
 
     def toggle_frame(self, vis):
         """Toggle coordinate frame visibility."""

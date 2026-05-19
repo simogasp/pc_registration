@@ -547,7 +547,7 @@ class SequenceVisualizer:
     def run(self):
         """Run the interactive visualization."""
         # Create visualizer
-        self.vis = o3d.visualization.VisualizerWithKeyCallback()  # type: ignore[attr-defined]
+        self.vis = o3d.visualization.VisualizerWithKeyCallback()  # type: ignore[attr-defined]  # ty: ignore[possibly-missing-submodule]
         self.vis.create_window(
             window_name="Scan Sequence Viewer",
             width=1280,

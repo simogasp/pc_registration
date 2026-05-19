@@ -312,7 +312,7 @@ class AnnotationVisualizer:
         self.mode = 0
 
         # Create visualizer
-        self.vis = o3d.visualization.VisualizerWithKeyCallback()
+        self.vis = o3d.visualization.VisualizerWithKeyCallback()  # ty: ignore[possibly-missing-submodule]
         self.geometries = []
 
         logger.info(f"Loaded {len(self.pcd.points)} points")
