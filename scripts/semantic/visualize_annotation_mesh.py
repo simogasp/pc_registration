@@ -17,7 +17,7 @@ import json
 import logging
 import numpy as np
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import argparse
 
 import open3d as o3d
@@ -34,7 +34,11 @@ UNLABELED_COLOR = np.array([0.5, 0.5, 0.5])
 
 def load_annotated_mesh(
     ply_path: str,
-) -> Tuple[o3d.geometry.TriangleMesh, Dict[str, np.ndarray], Dict[str, np.ndarray]]:
+) -> Tuple[
+    o3d.geometry.TriangleMesh,
+    Optional[Dict[str, np.ndarray]],
+    Optional[Dict[str, np.ndarray]],
+]:
     """Load annotated mesh PLY file with custom vertex and face properties.
 
     Args:
@@ -455,6 +459,10 @@ class MeshAnnotationVisualizer:
         """Apply geometric segmentation colors with OBBs (colored by type)."""
         logger.info("Mode 2: Geometric segmentation view")
 
+        if self.face_annotations is None:
+            raise RuntimeError(
+                "Geometric view requires face annotations, but none are present in the PLY file."
+            )
         # Get unique primitive types from primitives JSON
         primitive_types = {
             primitive.get("type")
@@ -512,6 +520,10 @@ class MeshAnnotationVisualizer:
         """Apply semantic segmentation colors with OBBs."""
         logger.info("Mode 3: Semantic segmentation view")
 
+        if self.face_annotations is None:
+            raise RuntimeError(
+                "Semantic view requires face annotations, but none are present in the PLY file."
+            )
         # Get unique semantic class IDs from face annotations
         unique_class_ids = np.unique(self.face_annotations["semantic_class"])
         unique_class_ids = unique_class_ids[

@@ -52,10 +52,11 @@ def read_annotated_ply(ply_path: str):
                     data[name].append(int(values[i]))
 
         # Convert to numpy arrays
-        for name in data:
-            data[name] = np.array(data[name])
+        np_data: dict[str, np.ndarray] = {
+            name: np.array(vals) for name, vals in data.items()
+        }
 
-    return data, properties
+    return np_data, properties
 
 
 def verify_annotations(ply_path: str):
