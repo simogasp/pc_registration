@@ -247,7 +247,7 @@ def build_pose_graph(
         logger.info("Detecting loop closures...")
         num_loop_closures = 0
 
-        for i in range(len(point_clouds)):
+        for i, source_pcd in enumerate(point_clouds):
             for j in range(i + 2, len(point_clouds)):  # Skip adjacent scans
                 # Check if scans are close in world coordinates
                 pos_i = initial_poses[i][:3, 3]
@@ -266,7 +266,7 @@ def build_pose_graph(
 
                     # Try registration
                     transformation, result = pairwise_registration(
-                        point_clouds[i],
+                        source_pcd,
                         point_clouds[j],
                         max_correspondence_distance,
                         init_transformation=source_in_target,
@@ -276,7 +276,7 @@ def build_pose_graph(
                     # Only add if registration is good
                     if result.fitness > LOOP_CLOSURE_FITNESS_THRESHOLD:
                         information = o3d.pipelines.registration.get_information_matrix_from_point_clouds(
-                            point_clouds[i],
+                            source_pcd,
                             point_clouds[j],
                             max_correspondence_distance,
                             transformation,

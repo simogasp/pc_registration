@@ -160,13 +160,12 @@ def validate_consecutive_pairs(
 
     # Process pairs with given step
     pair_count = 0
-    for i in range(len(pairs)):
+    for i, (source_ply, source_json) in enumerate(pairs):
         # Check if target index is within range
         target_idx = i + step
         if target_idx >= len(pairs):
             break
 
-        source_ply, source_json = pairs[i]
         target_ply, target_json = pairs[target_idx]
 
         logger.info(
