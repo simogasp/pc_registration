@@ -16,19 +16,19 @@ if __name__ == "__main__":
     # tutorial from here https: // www.open3d.org / docs / latest / tutorial / pipelines / icp_registration.html  # Point-to-plane-ICP
 
     # add input file argument
-    argparse = argparse.ArgumentParser(description="Simple ICP example")
-    argparse.add_argument("--source", type=str, help="source file path", required=True)
-    argparse.add_argument("--target", type=str, help="target file path", required=True)
-    argparse.add_argument(
+    parser = argparse.ArgumentParser(description="Simple ICP example")
+    parser.add_argument("--source", type=str, help="source file path", required=True)
+    parser.add_argument("--target", type=str, help="target file path", required=True)
+    parser.add_argument(
         "--threshold", type=float, help="threshold for ICP", default=0.02
     )
-    argparse.add_argument(
+    parser.add_argument(
         "--max_iter_icp",
         type=int,
         help="max number of iterations for ICP",
         default=2000,
     )
-    argparse.add_argument(
+    parser.add_argument(
         "-v",
         "--verbose",
         type=str,
@@ -37,7 +37,7 @@ if __name__ == "__main__":
         help="Set logging level (default: WARNING)",
     )
 
-    args = argparse.parse_args()
+    args = parser.parse_args()
 
     # Set logging level based on user selection
     setup_logging(getattr(logging, args.verbose))
