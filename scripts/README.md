@@ -25,6 +25,8 @@ This script loads a point cloud from file and displays it using the Open3D visua
 
 ## global_registration.py
 
+![registration](../images/screenshots/registration_maquette1.png)
+
 This script performs global registration between two point clouds using RANSAC followed by ICP refinement.
 
 - it generates a random initial transformation to be applied to the source point cloud
