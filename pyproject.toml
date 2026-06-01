@@ -34,7 +34,7 @@ test = [
 docs = [
     "sphinx>=7.0.0",
     "sphinx-rtd-theme>=2.0.0",
-    "sphinx-autodoc-typehints>=3.10.2",
+    "sphinx-autodoc-typehints>=3.10.4",
 ]
 
 [tool.setuptools.packages.find]
