@@ -23,7 +23,7 @@ Repository = "https://github.com/simogasp/pc_registration"
 [dependency-groups]
 dev = [
     "ruff>=0.15.15",
-    "ty>=0.0.41",
+    "ty>=0.0.55",
 ]
 
 [project.optional-dependencies]
