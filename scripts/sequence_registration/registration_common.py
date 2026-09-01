@@ -428,7 +428,7 @@ def load_poses_from_file(poses_file: str, num_scans: int) -> list[np.ndarray] | 
 
         return poses
 
-    except Exception as e:
+    except json.JSONDecodeError as e:
         logger.error(f"Error loading poses file: {e}")
         return None
 
