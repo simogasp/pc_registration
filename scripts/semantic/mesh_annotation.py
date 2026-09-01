@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Mesh annotation script for geometric and semantic labeling.
 
 This script annotates triangular meshes with geometric primitives and semantic information.

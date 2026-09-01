@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Test script to verify the plane annotation with perfect planar data."""
 
 import sys

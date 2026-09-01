@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Annotate point clouds with semantic labels."""
 
 import json

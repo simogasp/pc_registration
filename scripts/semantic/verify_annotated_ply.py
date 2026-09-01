@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Verify that annotated PLY files can be read correctly."""
 
 import sys

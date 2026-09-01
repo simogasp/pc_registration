@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Create a test PLY file with cylindrical data for testing."""
 
 from pathlib import Path

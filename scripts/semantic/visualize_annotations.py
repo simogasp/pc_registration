@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Visualize annotated point clouds with multiple visualization modes.
 
 This script loads annotated point cloud data and provides interactive visualization

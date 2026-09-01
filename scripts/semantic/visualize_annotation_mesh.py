@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Visualize annotated meshes with multiple visualization modes.
 
 This script loads annotated mesh data and provides interactive visualization
