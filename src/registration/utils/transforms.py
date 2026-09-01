@@ -311,9 +311,7 @@ def is_rotation_matrix(mat: np.ndarray) -> bool:
     if not np.allclose(mat.T @ mat, np.eye(3)):
         return False
     # Check determinant
-    if not np.isclose(np.linalg.det(mat), 1):
-        return False
-    return True
+    return np.isclose(np.linalg.det(mat), 1)
 
 
 def rotation_aligning_two_directions(
