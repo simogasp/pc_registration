@@ -10,7 +10,6 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, Tuple
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 FILENAME_ROOT = "validation_no-gt_gicp_step"
 
 
-def parse_filename(filename: str) -> Tuple[int, int]:
+def parse_filename(filename: str) -> tuple[int, int]:
     """Extract step and voxel size from validation result filename.
 
     Args:
@@ -44,7 +43,7 @@ def parse_filename(filename: str) -> Tuple[int, int]:
     return step, voxel_size
 
 
-def load_validation_results(directory: Path) -> Dict[Tuple[int, int], dict]:
+def load_validation_results(directory: Path) -> dict[tuple[int, int], dict]:
     """Load all validation JSON files from a directory.
 
     Args:
@@ -53,7 +52,7 @@ def load_validation_results(directory: Path) -> Dict[Tuple[int, int], dict]:
     Returns:
         Dictionary mapping (step, voxel_size) tuples to their statistics.
     """
-    results: Dict[Tuple[int, int], dict] = {}
+    results: dict[tuple[int, int], dict] = {}
 
     for json_file in directory.glob("*_step*_vs*.json"):
         try:
@@ -74,8 +73,8 @@ def load_validation_results(directory: Path) -> Dict[Tuple[int, int], dict]:
 
 
 def extract_metric_data(
-    results: Dict[Tuple[int, int], dict], metric_name: str
-) -> Dict[int, Dict[int, Dict[str, float]]]:
+    results: dict[tuple[int, int], dict], metric_name: str
+) -> dict[int, dict[int, dict[str, float]]]:
     """Extract data for a specific metric organized by step and voxel size.
 
     Args:
@@ -97,7 +96,7 @@ def extract_metric_data(
 
 
 def create_comparison_boxplot(
-    data: Dict[int, Dict[int, Dict[str, float]]],
+    data: dict[int, dict[int, dict[str, float]]],
     metric_name: str,
     metric_label: str,
     output_path: Path,
@@ -213,7 +212,7 @@ def create_comparison_boxplot(
     plt.close()
 
 
-def create_all_plots(results: Dict[Tuple[int, int], dict], output_dir: Path):
+def create_all_plots(results: dict[tuple[int, int], dict], output_dir: Path):
     """Create all comparison plots for different metrics.
 
     Args:

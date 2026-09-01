@@ -10,21 +10,21 @@ import open3d as o3d
 
 from registration.utils.logging import setup_logging
 from registration.utils.metrics import compute_rmse_transformations
-from registration.utils.transforms import (
-    transformation_error,
-    rototranslation_from_rotation_translation,
-    perturb_direction,
-    generate_random_rotation_matrix,
-    rotation_aligning_two_directions,
-)
-from registration.visualization.viewer import (
-    draw_registration_result,
-    print_point_cloud_info,
-)
 from registration.utils.point_cloud import (
     rough_scale_point_cloud,
     rough_scale_point_cloud_from_file,
     # align_centers_from_files,
+)
+from registration.utils.transforms import (
+    generate_random_rotation_matrix,
+    perturb_direction,
+    rotation_aligning_two_directions,
+    rototranslation_from_rotation_translation,
+    transformation_error,
+)
+from registration.visualization.viewer import (
+    draw_registration_result,
+    print_point_cloud_info,
 )
 
 logger = logging.getLogger(__name__)
@@ -361,7 +361,7 @@ def save_fused_map(fused: o3d.geometry.PointCloud, output_path: str) -> None:
     """
     success = o3d.io.write_point_cloud(output_path, fused, write_ascii=False)
     if not success:
-        raise IOError(f"Failed to write fused map to {output_path}")
+        raise OSError(f"Failed to write fused map to {output_path}")
     logger.info(f"Saved fused map to {output_path}")
 
 

@@ -1,8 +1,9 @@
 """Verify that annotated PLY files can be read correctly."""
 
-import numpy as np
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import numpy as np
 
 
 def read_annotated_ply(ply_path: str):

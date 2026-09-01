@@ -13,17 +13,15 @@ Controls:
 - Press 'Q' or ESC: Quit
 """
 
+import argparse
 import json
 import logging
-import numpy as np
 from pathlib import Path
-from typing import Dict, List, Tuple
-import argparse
 
-import open3d as o3d
 import matplotlib.pyplot as plt
+import numpy as np
+import open3d as o3d
 from matplotlib.colors import to_rgb
-
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +31,7 @@ UNLABELED_COLOR = np.array([0.1, 0.99, 0.1])
 
 def load_annotated_ply(
     ply_path: str,
-) -> Tuple[o3d.geometry.PointCloud, Dict[str, np.ndarray]]:
+) -> tuple[o3d.geometry.PointCloud, dict[str, np.ndarray]]:
     """Load annotated PLY file with custom properties.
 
     Args:
@@ -134,7 +132,7 @@ def load_annotated_ply(
     return pcd, annotations
 
 
-def load_primitives(json_path: str) -> List[Dict]:
+def load_primitives(json_path: str) -> list[dict]:
     """Load primitives from JSON file.
 
     Args:
@@ -152,7 +150,7 @@ def load_primitives(json_path: str) -> List[Dict]:
     return data.get("primitives", [])
 
 
-def load_semantic(json_path: str) -> Tuple[Dict[str, str], List[Dict]]:
+def load_semantic(json_path: str) -> tuple[dict[str, str], list[dict]]:
     """Load semantic information from JSON file.
 
     Args:
@@ -222,7 +220,7 @@ def get_n_colors(n: int, seed: int = 42) -> np.ndarray:
         return generate_colors(n, seed=seed)
 
 
-def create_obb_lineset(obb_data: Dict) -> o3d.geometry.LineSet:
+def create_obb_lineset(obb_data: dict) -> o3d.geometry.LineSet:
     """Create a LineSet representing an oriented bounding box.
 
     Args:

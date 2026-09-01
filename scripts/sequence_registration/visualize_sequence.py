@@ -22,12 +22,11 @@ Keyboard Controls:
 The animation loops continuously through the scan sequence.
 """
 
+import argparse
+import logging
 import sys
 import time
-import logging
 from pathlib import Path
-from typing import List, Tuple, Optional
-import argparse
 
 import numpy as np
 import open3d as o3d
@@ -39,8 +38,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from registration_common import (
     find_scan_pairs,
-    load_transformation_matrix,
     load_poses_from_file,
+    load_transformation_matrix,
 )
 
 logger = logging.getLogger(__name__)
@@ -114,13 +113,13 @@ class SequenceVisualizer:
 
     def __init__(
         self,
-        scan_pairs: List[Tuple[Path, Path]],
-        fused_map_path: Optional[str] = None,
+        scan_pairs: list[tuple[Path, Path]],
+        fused_map_path: str | None = None,
         animation_speed: float = DEFAULT_ANIMATION_SPEED,
-        start_scan: Optional[int] = None,
-        end_scan: Optional[int] = None,
+        start_scan: int | None = None,
+        end_scan: int | None = None,
         step: int = 1,
-        poses_file: Optional[str] = None,
+        poses_file: str | None = None,
     ):
         """Initialize the sequence visualizer.
 
@@ -286,7 +285,7 @@ class SequenceVisualizer:
             f"Loaded fused map with {num_points} points (downsampling: OFF, use D to toggle)"
         )
 
-    def _create_coordinate_frame(self, size: Optional[float] = None):
+    def _create_coordinate_frame(self, size: float | None = None):
         """Create a coordinate frame mesh.
 
         Args:

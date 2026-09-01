@@ -5,19 +5,18 @@ This script reads a localization JSON file (from localize_against_map.py)
 and creates histogram plots for rotation and translation errors across all scans.
 """
 
-import sys
 import argparse
 import json
 import logging
+import sys
 from pathlib import Path
-from typing import Tuple, List
 
 from registration.utils.logging import setup_logging
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from plotting_common import create_error_histograms  # noqa: E402
+from plotting_common import create_error_histograms
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ def load_localization_results(json_file: Path) -> dict:
     return data
 
 
-def extract_error_values(data: dict) -> Tuple[List[float], List[float]]:
+def extract_error_values(data: dict) -> tuple[list[float], list[float]]:
     """Extract rotation and translation error values from localization results.
 
     Args:

@@ -7,7 +7,6 @@ transformation matrices, and performing pairwise registration.
 import json
 import logging
 from pathlib import Path
-from typing import List, Tuple, Optional
 
 import numpy as np
 import open3d as o3d
@@ -52,7 +51,7 @@ def compute_normal_estimation_radius(
     return diagonal * NORMAL_ESTIMATION_RADIUS_FRACTION
 
 
-def find_scan_pairs(data_dir: Path) -> List[Tuple[Path, Path]]:
+def find_scan_pairs(data_dir: Path) -> list[tuple[Path, Path]]:
     """Find all matching pairs of .ply and .json files in a directory.
 
     Args:
@@ -188,7 +187,7 @@ def pairwise_registration(
     max_iteration: int = 30,
     verbose: bool = True,
     use_generalized_icp: bool = False,
-) -> Tuple[np.ndarray, o3d.pipelines.registration.RegistrationResult]:
+) -> tuple[np.ndarray, o3d.pipelines.registration.RegistrationResult]:
     """Perform pairwise ICP or GICP registration between two point clouds.
 
     Args:
@@ -282,7 +281,7 @@ def remove_outliers(
 
 def filter_distant_points(
     pcd: o3d.geometry.PointCloud,
-    max_distance: Optional[float] = None,
+    max_distance: float | None = None,
     percentile: float = 99.0,
     use_centroid: bool = True,
 ) -> o3d.geometry.PointCloud:
@@ -395,7 +394,7 @@ def translation_error(t1: np.ndarray, t2: np.ndarray) -> float:
     return float(np.linalg.norm(t1 - t2))
 
 
-def load_poses_from_file(poses_file: str, num_scans: int) -> Optional[List[np.ndarray]]:
+def load_poses_from_file(poses_file: str, num_scans: int) -> list[np.ndarray] | None:
     """Load all poses from a JSON file.
 
     Args:
@@ -434,7 +433,7 @@ def load_poses_from_file(poses_file: str, num_scans: int) -> Optional[List[np.nd
         return None
 
 
-def save_poses_to_file(poses: List[np.ndarray], output_path: Path):
+def save_poses_to_file(poses: list[np.ndarray], output_path: Path):
     """Save poses to a JSON file.
 
     Args:
@@ -477,7 +476,7 @@ def parse_pose_line(line: str, line_number: int) -> np.ndarray:
     )
 
 
-def read_poses_from_txt(poses_file: Path) -> List[np.ndarray]:
+def read_poses_from_txt(poses_file: Path) -> list[np.ndarray]:
     """Read all poses from a flat-text poses file.
 
     Blank lines and lines starting with '#' are skipped. Each remaining line
@@ -568,7 +567,7 @@ def save_point_cloud_binary(pcd: o3d.geometry.PointCloud, output_path: Path) -> 
     )
 
     if not success:
-        raise IOError(f"Failed to save point cloud to {output_path}")
+        raise OSError(f"Failed to save point cloud to {output_path}")
 
     file_size_mb = output_path.stat().st_size / (1024 * 1024)
     logger.info(f"Saved {output_path.name} ({file_size_mb:.2f} MB)")

@@ -5,13 +5,13 @@ import argparse
 import logging
 
 import open3d as o3d
+from global_registration import rough_scale_point_cloud
 
 from registration.utils.logging import setup_logging
-from registration.visualization.viewer import print_point_cloud_info
 from registration.utils.transforms import (
     get_flip_transform,
 )
-from global_registration import rough_scale_point_cloud
+from registration.visualization.viewer import print_point_cloud_info
 
 logger = logging.getLogger(__name__)
 

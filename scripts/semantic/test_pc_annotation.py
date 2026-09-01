@@ -1,10 +1,10 @@
 """Test script to verify the plane annotation with perfect planar data."""
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import open3d as o3d
-from pathlib import Path
-import sys
-from typing import Tuple
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -18,7 +18,7 @@ MARGIN = 0.01
 RANDOM_SEED = 42
 
 
-def get_plane_basis(normal: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_plane_basis(normal: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Compute two orthogonal basis vectors in the plane perpendicular to the normal.
 
     Args:

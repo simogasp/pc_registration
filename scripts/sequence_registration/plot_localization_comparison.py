@@ -12,14 +12,13 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import Dict, Tuple, Optional, List
 
 from registration.utils.logging import setup_logging
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from plotting_common import create_grouped_barplot, create_grouped_boxplot  # noqa: E402
+from plotting_common import create_grouped_barplot, create_grouped_boxplot
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +37,7 @@ METHOD_COLORS = {
 }
 
 
-def parse_directory_name(dirname: str) -> Tuple[str, float]:
+def parse_directory_name(dirname: str) -> tuple[str, float]:
     """Extract method and voxel size from directory name.
 
     Args:
@@ -64,7 +63,7 @@ def parse_directory_name(dirname: str) -> Tuple[str, float]:
     return METHOD_MAP[method_key], voxel_size
 
 
-def load_localization_results(base_dir: Path) -> Dict[float, Dict[str, dict]]:
+def load_localization_results(base_dir: Path) -> dict[float, dict[str, dict]]:
     """Load all localization results from a base directory.
 
     Args:
@@ -126,8 +125,8 @@ def load_localization_results(base_dir: Path) -> Dict[float, Dict[str, dict]]:
 
 
 def extract_metric_data(
-    results: Dict[float, Dict[str, dict]], metric_name: str
-) -> Dict[str, Dict[str, Dict[str, float]]]:
+    results: dict[float, dict[str, dict]], metric_name: str
+) -> dict[str, dict[str, dict[str, float]]]:
     """Extract data for a specific metric organized for box plot creation.
 
     Args:
@@ -157,8 +156,8 @@ def extract_metric_data(
 
 
 def compute_success_rate(
-    rotation_errors: List[float],
-    translation_errors: List[float],
+    rotation_errors: list[float],
+    translation_errors: list[float],
     max_rot_err: float,
     max_transl_err: float,
 ) -> float:
@@ -188,10 +187,10 @@ def compute_success_rate(
 
 
 def extract_success_rate_data(
-    results: Dict[float, Dict[str, dict]],
+    results: dict[float, dict[str, dict]],
     max_rot_err: float,
     max_transl_err: float,
-) -> Dict[str, Dict[str, float]]:
+) -> dict[str, dict[str, float]]:
     """Extract success rate data organized for bar plot creation.
 
     Args:
@@ -203,7 +202,7 @@ def extract_success_rate_data(
         Nested dictionary: {voxel_size_str: {method: success_rate}} where success
         rate is a fraction in [0, 1].
     """
-    organized_data: Dict[str, Dict[str, float]] = {}
+    organized_data: dict[str, dict[str, float]] = {}
 
     for voxel_size, methods_data in results.items():
         voxel_key = str(int(voxel_size))
@@ -227,13 +226,13 @@ def extract_success_rate_data(
 
 
 def _create_boxplots_for_metric(
-    results: Dict[float, Dict[str, dict]],
+    results: dict[float, dict[str, dict]],
     metric_key: str,
     metric_label: str,
     filename_prefix: str,
     output_dir: Path,
-    voxel_sizes: List[float],
-    methods: List[str],
+    voxel_sizes: list[float],
+    methods: list[str],
     voxel_suffix: str,
     combined_title: str,
     single_title_template: str,
@@ -281,12 +280,12 @@ def _create_boxplots_for_metric(
 
 
 def _create_barplots_for_success_rate(
-    results: Dict[float, Dict[str, dict]],
+    results: dict[float, dict[str, dict]],
     max_rot_err: float,
     max_transl_err: float,
     output_dir: Path,
-    voxel_sizes: List[float],
-    methods: List[str],
+    voxel_sizes: list[float],
+    methods: list[str],
     voxel_suffix: str,
 ) -> None:
     """Generate a combined barplot and one per-voxel-size barplot for success rate.
@@ -334,11 +333,11 @@ def _create_barplots_for_success_rate(
 
 
 def create_comparison_plots(
-    results: Dict[float, Dict[str, dict]],
+    results: dict[float, dict[str, dict]],
     output_dir: Path,
-    voxel_sizes_filter: Optional[List[float]] = None,
-    max_rot_err: Optional[float] = None,
-    max_transl_err: Optional[float] = None,
+    voxel_sizes_filter: list[float] | None = None,
+    max_rot_err: float | None = None,
+    max_transl_err: float | None = None,
 ):
     """Create comparison plots for rotation error, translation error, and success rate.
 
@@ -406,8 +405,8 @@ def create_comparison_plots(
 
 
 def filter_voxel_sizes(
-    results: Dict[float, Dict[str, dict]], requested_sizes: Optional[List[float]]
-) -> Dict[float, Dict[str, dict]]:
+    results: dict[float, dict[str, dict]], requested_sizes: list[float] | None
+) -> dict[float, dict[str, dict]]:
     """Filter results to only include requested voxel sizes.
 
     Args:

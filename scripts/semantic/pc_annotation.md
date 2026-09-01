@@ -342,8 +342,8 @@ Edit `pc_annotation.py` to adjust fitting parameters:
 # Plane fitting (line ~36)
 plane_model, inliers = pcd.segment_plane(
     distance_threshold=0.005,  # Inlier distance threshold (meters)
-    ransac_n=3,                # Min points for plane
-    num_iterations=2000        # RANSAC iterations
+    ransac_n=3,  # Min points for plane
+    num_iterations=2000,  # RANSAC iterations
 )
 
 # Cylinder fitting (line ~76)

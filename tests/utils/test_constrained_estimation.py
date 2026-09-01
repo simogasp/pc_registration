@@ -19,7 +19,6 @@ from registration.utils.transforms import (
     rototranslation_from_rotation_translation,
 )
 
-
 # ---------------------------------------------------------------------------
 # Test-case TypedDicts
 # ---------------------------------------------------------------------------

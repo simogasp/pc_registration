@@ -6,7 +6,6 @@ used by validation and localization analysis scripts.
 
 import logging
 from pathlib import Path
-from typing import List, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_histogram(
-    values: List[float],
+    values: list[float],
     title: str,
     xlabel: str,
     output_path: Path,
@@ -94,8 +93,8 @@ def create_histogram(
 
 
 def create_error_histograms(
-    rotation_errors: List[float],
-    translation_errors: List[float],
+    rotation_errors: list[float],
+    translation_errors: list[float],
     output_dir: Path,
     rotation_title: str = "Distribution of Rotation Errors",
     translation_title: str = "Distribution of Translation Errors",
@@ -141,12 +140,12 @@ def create_error_histograms(
 
 
 def create_grouped_boxplot(
-    data: Dict[str, Dict[str, Dict[str, float]]],
+    data: dict[str, dict[str, dict[str, float]]],
     metric_label: str,
     output_path: Path,
-    group_labels: List[str],
-    category_labels: List[str],
-    colors: Dict[str, str],
+    group_labels: list[str],
+    category_labels: list[str],
+    colors: dict[str, str],
     title: str,
 ):
     """Create a grouped box plot comparing multiple categories across groups.
@@ -248,12 +247,12 @@ def create_grouped_boxplot(
 
 
 def create_grouped_barplot(
-    data: Dict[str, Dict[str, float]],
+    data: dict[str, dict[str, float]],
     metric_label: str,
     output_path: Path,
-    group_labels: List[str],
-    category_labels: List[str],
-    colors: Dict[str, str],
+    group_labels: list[str],
+    category_labels: list[str],
+    colors: dict[str, str],
     title: str,
 ):
     """Create a grouped bar plot comparing a scalar metric across groups and categories.
