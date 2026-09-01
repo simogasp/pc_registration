@@ -229,7 +229,7 @@ class SequenceVisualizer:
                 # Extract translation (position) from transformation matrix
                 position = H[:3, 3]
                 trajectory_points.append(position)
-            except Exception as e:
+            except ValueError as e:
                 logger.warning(
                     f"Could not load transformation for scan {scan_idx}: {e}"
                 )
