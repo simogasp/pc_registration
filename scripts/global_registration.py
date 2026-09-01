@@ -96,8 +96,8 @@ def prepare_dataset(
     source_file: str,
     target_file: str,
     voxel_size: float,
-    trans_init: np.ndarray = np.identity(4),
-    correction: np.ndarray = np.identity(4),
+    trans_init: np.ndarray | None = None,
+    correction: np.ndarray | None = None,
 ) -> tuple:
     """Load and prepare point cloud datasets for registration.
 
@@ -121,6 +121,12 @@ def prepare_dataset(
             - source_fpfh: FPFH features of the downsampled source
             - target_fpfh: FPFH features of the downsampled target
     """
+    if trans_init is None:
+        trans_init = np.identity(4)
+
+    if correction is None:
+        correction = np.identity(4)
+
     logger.info("Load two point clouds and disturb initial pose")
     source: o3d.geometry.PointCloud = o3d.io.read_point_cloud(source_file)
     # if failed to read the point cloud, raise an error
