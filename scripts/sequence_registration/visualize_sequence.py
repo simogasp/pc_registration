@@ -335,7 +335,7 @@ class SequenceVisualizer:
 
             return scan, H
 
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"Error loading scan {scan_idx}: {e}")
             return None, None
 
