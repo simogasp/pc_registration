@@ -74,7 +74,7 @@ def create_histogram(
         transform=ax.transAxes,
         verticalalignment="top",
         horizontalalignment="right",
-        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.5},
         fontsize=10,
         family="monospace",
     )
