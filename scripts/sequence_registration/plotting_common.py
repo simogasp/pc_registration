@@ -267,7 +267,7 @@ def create_grouped_barplot(
         colors: Dictionary mapping category labels to colors.
         title: Plot title.
     """
-    fig, ax = plt.subplots(figsize=(14, 7))
+    _, ax = plt.subplots(figsize=(14, 7))
 
     num_categories = len(category_labels)
     group_width = num_categories + 0.5
