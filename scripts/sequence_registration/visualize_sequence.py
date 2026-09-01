@@ -80,7 +80,7 @@ def estimate_coordinate_frame_size(ply_path: Path) -> float:
             f"Estimated frame size {frame_size:.2f} (scan max extent: {max_extent:.2f})"
         )
         return frame_size
-    except Exception as e:
+    except RuntimeError as e:
         logger.warning(
             f"Could not estimate frame size from {ply_path}: {e}. "
             f"Using fallback size {COORDINATE_FRAME_SIZE}."
