@@ -110,9 +110,7 @@ def create_comparison_boxplot(
         output_path: Path where to save the plot.
     """
     steps = sorted(data.keys())
-    voxel_sizes = sorted(
-        set(vs for step_data in data.values() for vs in step_data.keys())
-    )
+    voxel_sizes = sorted({vs for step_data in data.values() for vs in step_data.keys()})
 
     _, ax = plt.subplots(figsize=(12, 6))
 
