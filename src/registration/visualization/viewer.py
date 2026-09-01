@@ -6,6 +6,8 @@ import logging
 import numpy as np
 import open3d as o3d
 
+logger = logging.getLogger(__name__)
+
 
 def draw_registration_result(
     source: o3d.geometry.PointCloud,
@@ -64,11 +66,11 @@ def print_point_cloud_info(
     num_points = len(pcd.points)
     aabb = pcd.get_axis_aligned_bounding_box()
     obb = pcd.get_minimal_oriented_bounding_box()
-    logging.info(f"Point Cloud '{name}':")
-    logging.info(f"\tNumber of points: {num_points}")
-    logging.info(f"\tHas normals: {pcd.has_normals()}")
-    logging.info(f"\tPoint cloud size: {pcd.get_max_bound() - pcd.get_min_bound()}")
-    logging.info(
+    logger.info(f"Point Cloud '{name}':")
+    logger.info(f"\tNumber of points: {num_points}")
+    logger.info(f"\tHas normals: {pcd.has_normals()}")
+    logger.info(f"\tPoint cloud size: {pcd.get_max_bound() - pcd.get_min_bound()}")
+    logger.info(
         f"\tAxis-Aligned Bounding Box: min {aabb.min_bound}, max {aabb.max_bound}"
     )
-    logging.info(f"\tOriented Bounding Box: center {obb.center}, extent {obb.extent}")
+    logger.info(f"\tOriented Bounding Box: center {obb.center}, extent {obb.extent}")

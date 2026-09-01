@@ -6,6 +6,8 @@ import logging
 import numpy as np
 import open3d as o3d
 
+logger = logging.getLogger(__name__)
+
 
 def compute_rmse_between_point_clouds(
     source: o3d.geometry.PointCloud,
@@ -45,7 +47,7 @@ def compute_rmse_between_point_clouds(
 
     dists = np.linalg.norm(source_points - target_points, axis=1)
     rmse_val = np.sqrt(np.mean(dists**2))
-    logging.debug(f"Computed RMSE = {rmse_val:.6f}")
+    logger.debug(f"Computed RMSE = {rmse_val:.6f}")
     return rmse_val, dists
 
 

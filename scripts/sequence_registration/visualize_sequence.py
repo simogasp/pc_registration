@@ -534,12 +534,13 @@ class SequenceVisualizer:
         """
         current_time = time.time()
 
-        if self.is_playing:
-            # Check if enough time has passed for next frame
-            if current_time - self.last_update_time >= self.animation_speed:
-                self.current_scan_idx = (self.current_scan_idx + 1) % self.num_scans
-                self._update_visualization()
-                self.last_update_time = current_time
+        if (
+            self.is_playing
+            and current_time - self.last_update_time >= self.animation_speed
+        ):
+            self.current_scan_idx = (self.current_scan_idx + 1) % self.num_scans
+            self._update_visualization()
+            self.last_update_time = current_time
 
         return False
 
