@@ -11,24 +11,23 @@ This script performs sanity checks on ground truth transformations by:
 import argparse
 import json
 import logging
+
+# Add scripts directory to path for imports
+import sys
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
 from registration.utils.logging import setup_logging
 
-# Add scripts directory to path for imports
-import sys
-
 scripts_dir = Path(__file__).parent
 if str(scripts_dir) not in sys.path:
     sys.path.insert(0, str(scripts_dir))
 
-from registration_common import (  # noqa: E402
+from registration_common import (
     find_scan_pairs,
-    load_transformation_matrix,
     load_point_cloud,
+    load_transformation_matrix,
     pairwise_registration,
     rotation_error_degrees,
     translation_error,
@@ -76,9 +75,9 @@ def validate_consecutive_pairs(
     voxel_size: float = 50.0,
     max_correspondence_distance: float = 150.0,
     use_ground_truth_init: bool = True,
-    output_file: Optional[str] = None,
-    start_scan: Optional[int] = None,
-    end_scan: Optional[int] = None,
+    output_file: str | None = None,
+    start_scan: int | None = None,
+    end_scan: int | None = None,
     step: int = 1,
     use_generalized_icp: bool = False,
 ):
@@ -159,7 +158,6 @@ def validate_consecutive_pairs(
     results = []
 
     # Process pairs with given step
-    pair_count = 0
     for i, (source_ply, source_json) in enumerate(pairs):
         # Check if target index is within range
         target_idx = i + step
@@ -169,10 +167,9 @@ def validate_consecutive_pairs(
         target_ply, target_json = pairs[target_idx]
 
         logger.info(
-            f"\nPair {pair_count}/{num_pairs - 1}: {source_ply.stem} -> {target_ply.stem} (step={step})"
+            f"\nPair {i}/{num_pairs - 1}: {source_ply.stem} -> {target_ply.stem} (step={step})"
         )
         logger.info("-" * 80)
-        pair_count += 1
 
         # Load point clouds
         logger.info("  Loading point clouds...")
@@ -238,7 +235,7 @@ def validate_consecutive_pairs(
 
         # Store result for JSON output
         result_entry = {
-            "pair_index": pair_count - 1,
+            "pair_index": i,
             "source_index": i,
             "target_index": target_idx,
             "source": source_ply.stem,

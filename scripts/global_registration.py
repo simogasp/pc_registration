@@ -10,21 +10,21 @@ import open3d as o3d
 
 from registration.utils.logging import setup_logging
 from registration.utils.metrics import compute_rmse_transformations
-from registration.utils.transforms import (
-    transformation_error,
-    rototranslation_from_rotation_translation,
-    perturb_direction,
-    generate_random_rotation_matrix,
-    rotation_aligning_two_directions,
-)
-from registration.visualization.viewer import (
-    draw_registration_result,
-    print_point_cloud_info,
-)
 from registration.utils.point_cloud import (
     rough_scale_point_cloud,
     rough_scale_point_cloud_from_file,
     # align_centers_from_files,
+)
+from registration.utils.transforms import (
+    generate_random_rotation_matrix,
+    perturb_direction,
+    rotation_aligning_two_directions,
+    rototranslation_from_rotation_translation,
+    transformation_error,
+)
+from registration.visualization.viewer import (
+    draw_registration_result,
+    print_point_cloud_info,
 )
 
 logger = logging.getLogger(__name__)
@@ -96,8 +96,8 @@ def prepare_dataset(
     source_file: str,
     target_file: str,
     voxel_size: float,
-    trans_init: np.ndarray = np.identity(4),
-    correction: np.ndarray = np.identity(4),
+    trans_init: np.ndarray | None = None,
+    correction: np.ndarray | None = None,
 ) -> tuple:
     """Load and prepare point cloud datasets for registration.
 
@@ -121,6 +121,12 @@ def prepare_dataset(
             - source_fpfh: FPFH features of the downsampled source
             - target_fpfh: FPFH features of the downsampled target
     """
+    if trans_init is None:
+        trans_init = np.identity(4)
+
+    if correction is None:
+        correction = np.identity(4)
+
     logger.info("Load two point clouds and disturb initial pose")
     source: o3d.geometry.PointCloud = o3d.io.read_point_cloud(source_file)
     # if failed to read the point cloud, raise an error
@@ -361,7 +367,7 @@ def save_fused_map(fused: o3d.geometry.PointCloud, output_path: str) -> None:
     """
     success = o3d.io.write_point_cloud(output_path, fused, write_ascii=False)
     if not success:
-        raise IOError(f"Failed to write fused map to {output_path}")
+        raise OSError(f"Failed to write fused map to {output_path}")
     logger.info(f"Saved fused map to {output_path}")
 
 

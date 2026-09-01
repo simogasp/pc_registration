@@ -22,12 +22,11 @@ Keyboard Controls:
 The animation loops continuously through the scan sequence.
 """
 
+import argparse
+import logging
 import sys
 import time
-import logging
 from pathlib import Path
-from typing import List, Tuple, Optional
-import argparse
 
 import numpy as np
 import open3d as o3d
@@ -39,8 +38,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from registration_common import (
     find_scan_pairs,
-    load_transformation_matrix,
     load_poses_from_file,
+    load_transformation_matrix,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,7 +80,7 @@ def estimate_coordinate_frame_size(ply_path: Path) -> float:
             f"Estimated frame size {frame_size:.2f} (scan max extent: {max_extent:.2f})"
         )
         return frame_size
-    except Exception as e:
+    except RuntimeError as e:
         logger.warning(
             f"Could not estimate frame size from {ply_path}: {e}. "
             f"Using fallback size {COORDINATE_FRAME_SIZE}."
@@ -114,13 +113,13 @@ class SequenceVisualizer:
 
     def __init__(
         self,
-        scan_pairs: List[Tuple[Path, Path]],
-        fused_map_path: Optional[str] = None,
+        scan_pairs: list[tuple[Path, Path]],
+        fused_map_path: str | None = None,
         animation_speed: float = DEFAULT_ANIMATION_SPEED,
-        start_scan: Optional[int] = None,
-        end_scan: Optional[int] = None,
+        start_scan: int | None = None,
+        end_scan: int | None = None,
         step: int = 1,
-        poses_file: Optional[str] = None,
+        poses_file: str | None = None,
     ):
         """Initialize the sequence visualizer.
 
@@ -230,7 +229,7 @@ class SequenceVisualizer:
                 # Extract translation (position) from transformation matrix
                 position = H[:3, 3]
                 trajectory_points.append(position)
-            except Exception as e:
+            except ValueError as e:
                 logger.warning(
                     f"Could not load transformation for scan {scan_idx}: {e}"
                 )
@@ -286,7 +285,7 @@ class SequenceVisualizer:
             f"Loaded fused map with {num_points} points (downsampling: OFF, use D to toggle)"
         )
 
-    def _create_coordinate_frame(self, size: Optional[float] = None):
+    def _create_coordinate_frame(self, size: float | None = None):
         """Create a coordinate frame mesh.
 
         Args:
@@ -336,7 +335,7 @@ class SequenceVisualizer:
 
             return scan, H
 
-        except Exception as e:
+        except ValueError as e:
             logger.error(f"Error loading scan {scan_idx}: {e}")
             return None, None
 
@@ -535,12 +534,13 @@ class SequenceVisualizer:
         """
         current_time = time.time()
 
-        if self.is_playing:
-            # Check if enough time has passed for next frame
-            if current_time - self.last_update_time >= self.animation_speed:
-                self.current_scan_idx = (self.current_scan_idx + 1) % self.num_scans
-                self._update_visualization()
-                self.last_update_time = current_time
+        if (
+            self.is_playing
+            and current_time - self.last_update_time >= self.animation_speed
+        ):
+            self.current_scan_idx = (self.current_scan_idx + 1) % self.num_scans
+            self._update_visualization()
+            self.last_update_time = current_time
 
         return False
 

@@ -12,14 +12,14 @@ The registration uses FPFH features and RANSAC for robust feature matching,
 which does not require an initial pose guess.
 """
 
-import sys
 import argparse
 import json
 import logging
+import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Optional
+
 import numpy as np
 import open3d as o3d
 
@@ -28,15 +28,15 @@ from registration.utils.logging import setup_logging
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from registration_common import (  # noqa: E402
+from registration_common import (
     find_scan_pairs,
-    load_transformation_matrix,
     load_point_cloud,
-    rotation_error_degrees,
-    translation_error,
     load_poses_from_file,
-    save_poses_to_file,
+    load_transformation_matrix,
     pairwise_registration,
+    rotation_error_degrees,
+    save_poses_to_file,
+    translation_error,
 )
 
 logger = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ def localize_scan_to_map(
     scan: o3d.geometry.PointCloud,
     global_map: o3d.geometry.PointCloud,
     max_correspondence_distance: float,
-    init_transformation: np.ndarray = np.eye(4),
+    init_transformation: np.ndarray | None = None,
     max_iteration: int = 50,
 ) -> tuple:
     """Localize a scan against a global map using ICP.
@@ -141,6 +141,9 @@ def localize_scan_to_map(
     Returns:
         Tuple of (estimated_pose, registration_result).
     """
+    if init_transformation is None:
+        init_transformation = np.eye(4)
+
     result = o3d.pipelines.registration.registration_icp(
         scan,
         global_map,
@@ -166,7 +169,7 @@ def save_parameters(params: dict, output_path: Path):
     logger.info(f"Saved execution parameters to {output_path.name}")
 
 
-def compute_stats(values: List[float]) -> dict:
+def compute_stats(values: list[float]) -> dict:
     """Compute summary statistics for a list of numeric values.
 
     Args:
@@ -186,7 +189,7 @@ def compute_stats(values: List[float]) -> dict:
 
 
 def _needs_separate_refinement_clouds(
-    refinement_voxel_size: Optional[float],
+    refinement_voxel_size: float | None,
     ransac_voxel_size: float,
 ) -> bool:
     """Return True if refinement requires loading clouds at a different resolution.
@@ -205,7 +208,7 @@ def _needs_separate_refinement_clouds(
 
 def _load_scan_for_refinement(
     ply_path: Path,
-    refinement_voxel_size: Optional[float],
+    refinement_voxel_size: float | None,
     scan_ransac: o3d.geometry.PointCloud,
     ransac_voxel_size: float,
 ) -> o3d.geometry.PointCloud:
@@ -240,15 +243,15 @@ def process_single_scan(
     global_map: o3d.geometry.PointCloud,
     voxel_size: float,
     max_correspondence_distance: float,
-    ground_truth_poses: Optional[list] = None,
+    ground_truth_poses: list | None = None,
     relative_idx: int = 0,
     end_idx: int = 0,
     refine_poses: bool = False,
     icp_refinement_distance: float = 50.0,
     use_gicp: bool = False,
-    refinement_voxel_size: Optional[float] = None,
-    global_map_refinement: Optional[o3d.geometry.PointCloud] = None,
-    estimated_pose: Optional[np.ndarray] = None,
+    refinement_voxel_size: float | None = None,
+    global_map_refinement: o3d.geometry.PointCloud | None = None,
+    estimated_pose: np.ndarray | None = None,
 ) -> dict:
     """Process a single scan: load, localize, compute errors, and log results.
 
@@ -294,7 +297,7 @@ def process_single_scan(
         H_gt = load_transformation_matrix(json_path)
 
     # Perform global localization using RANSAC, or use a pre-estimated pose
-    time_ransac_s: Optional[float] = None
+    time_ransac_s: float | None = None
     if estimated_pose is not None:
         logger.info("Using pre-estimated pose (skipping RANSAC global registration)...")
         H_estimated = estimated_pose
@@ -312,7 +315,7 @@ def process_single_scan(
         logger.debug(f"    RANSAC took {time_ransac_s:.3f} s")
 
     # Optionally refine the pose using ICP or GICP
-    time_refinement_s: Optional[float] = None
+    time_refinement_s: float | None = None
     if refine_poses:
         refinement_name = "GICP" if use_gicp else "ICP"
         scan_refine = _load_scan_for_refinement(
@@ -416,7 +419,7 @@ def _build_method_string(
     refine_poses: bool,
     use_gicp: bool,
     voxel_size: float,
-    refinement_voxel_size: Optional[float],
+    refinement_voxel_size: float | None,
 ) -> str:
     """Build a human-readable description of the registration method.
 
@@ -446,16 +449,16 @@ def localize_scans(
     map_file: str,
     voxel_size: float = 50.0,
     max_correspondence_distance: float = 150.0,
-    output_file: Optional[str] = None,
-    start_scan: Optional[int] = None,
-    end_scan: Optional[int] = None,
+    output_file: str | None = None,
+    start_scan: int | None = None,
+    end_scan: int | None = None,
     step: int = 1,
-    poses_file: Optional[str] = None,
+    poses_file: str | None = None,
     refine_poses: bool = False,
     icp_refinement_distance: float = 50.0,
     use_gicp: bool = False,
-    refinement_voxel_size: Optional[float] = None,
-    estimated_poses_file: Optional[str] = None,
+    refinement_voxel_size: float | None = None,
+    estimated_poses_file: str | None = None,
 ):
     """Localize all scans against a global map using RANSAC-based global registration.
 
@@ -560,7 +563,7 @@ def localize_scans(
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         params = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).astimezone().isoformat(),
             "data_dir": str(data_path),
             "map_file": str(map_path),
             "voxel_size": voxel_size,

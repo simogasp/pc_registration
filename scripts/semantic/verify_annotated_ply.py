@@ -1,8 +1,10 @@
+#! /usr/bin/env python3
 """Verify that annotated PLY files can be read correctly."""
 
-import numpy as np
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import numpy as np
 
 
 def read_annotated_ply(ply_path: str):
@@ -113,11 +115,6 @@ if __name__ == "__main__":
         print(f"Error: File not found: {ply_path}")
         sys.exit(1)
 
-    try:
-        verify_annotations(ply_path)
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-
-        traceback.print_exc()
+    if not verify_annotations(ply_path):
+        print("✗ Verification failed.")
         sys.exit(1)

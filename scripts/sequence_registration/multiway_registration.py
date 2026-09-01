@@ -7,34 +7,33 @@ creates a fused map from the optimized point clouds.
 """
 
 import argparse
-from datetime import datetime
 import logging
+
+# Add scripts directory to path for imports
+import sys
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Tuple, Optional
 
 import numpy as np
 import open3d as o3d
 
 from registration.utils.logging import setup_logging
 
-# Add scripts directory to path for imports
-import sys
-
 scripts_dir = Path(__file__).parent
 if str(scripts_dir) not in sys.path:
     sys.path.insert(0, str(scripts_dir))
 
-from registration_common import (  # noqa: E402
+from registration_common import (
+    filter_distant_points,
     find_scan_pairs,
-    load_transformation_matrix,
-    load_point_cloud,
     load_and_transform_scan,
+    load_point_cloud,
+    load_transformation_matrix,
     pairwise_registration,
     remove_outliers,
-    filter_distant_points,
-    save_poses_to_file,
-    save_point_cloud_binary,
     save_parameters,
+    save_point_cloud_binary,
+    save_poses_to_file,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,10 +52,10 @@ GLOBAL_OPTIMIZATION_REFERENCE_NODE = 0  # Reference node for optimization (first
 
 
 def load_point_clouds_with_poses(
-    pairs: List[Tuple[Path, Path]],
+    pairs: list[tuple[Path, Path]],
     voxel_size: float = 0.0,
     load_ground_truth: bool = True,
-) -> Tuple[List[o3d.geometry.PointCloud], List[np.ndarray]]:
+) -> tuple[list[o3d.geometry.PointCloud], list[np.ndarray]]:
     """Load all point clouds and optionally their initial poses from JSON files.
 
     Args:
@@ -95,10 +94,10 @@ def load_point_clouds_with_poses(
 
 
 def build_initial_poses_from_registration(
-    point_clouds: List[o3d.geometry.PointCloud],
+    point_clouds: list[o3d.geometry.PointCloud],
     max_correspondence_distance: float,
     use_generalized_icp: bool = False,
-) -> List[np.ndarray]:
+) -> list[np.ndarray]:
     """Build initial poses by registering consecutive scans.
 
     First scan is placed at identity. Each subsequent scan is registered
@@ -160,10 +159,10 @@ def build_initial_poses_from_registration(
 
 
 def build_pose_graph(
-    point_clouds: List[o3d.geometry.PointCloud],
-    initial_poses: List[np.ndarray],
+    point_clouds: list[o3d.geometry.PointCloud],
+    initial_poses: list[np.ndarray],
     max_correspondence_distance: float,
-    loop_closure_distance_threshold: Optional[float] = None,
+    loop_closure_distance_threshold: float | None = None,
     use_generalized_icp: bool = False,
 ) -> o3d.pipelines.registration.PoseGraph:
     """Build a pose graph for multiway registration.
@@ -337,9 +336,9 @@ def optimize_pose_graph(
 
 
 def load_full_resolution_scans(
-    pairs: List[Tuple[Path, Path]],
-    poses: List[np.ndarray],
-) -> List[o3d.geometry.PointCloud]:
+    pairs: list[tuple[Path, Path]],
+    poses: list[np.ndarray],
+) -> list[o3d.geometry.PointCloud]:
     """Reload all scans at full resolution and transform with the given poses.
 
     This is called after pose graph optimisation to build the fused map at full
@@ -364,13 +363,13 @@ def load_full_resolution_scans(
 
 
 def create_fused_map(
-    transformed_scans: List[o3d.geometry.PointCloud],
+    transformed_scans: list[o3d.geometry.PointCloud],
     voxel_size: float = 10.0,
     remove_outliers_flag: bool = False,
     outlier_nb_neighbors: int = 20,
     outlier_std_ratio: float = 2.0,
     filter_distant_flag: bool = False,
-    max_distance: Optional[float] = None,
+    max_distance: float | None = None,
     distance_percentile: float = 99.0,
 ) -> o3d.geometry.PointCloud:
     """Create a fused map from a list of pre-transformed point clouds.
@@ -431,16 +430,16 @@ def multiway_registration(
     voxel_size_input: float = 50.0,
     voxel_size_fusion: float = 10.0,
     max_correspondence_distance: float = 150.0,
-    loop_closure_distance: Optional[float] = None,
+    loop_closure_distance: float | None = None,
     use_ground_truth: bool = True,
-    start_scan: Optional[int] = None,
-    end_scan: Optional[int] = None,
+    start_scan: int | None = None,
+    end_scan: int | None = None,
     step: int = 1,
     remove_outliers_flag: bool = False,
     outlier_nb_neighbors: int = 20,
     outlier_std_ratio: float = 2.0,
     filter_distant_flag: bool = False,
-    max_distance: Optional[float] = None,
+    max_distance: float | None = None,
     distance_percentile: float = 99.0,
     use_generalized_icp: bool = False,
 ):
@@ -512,7 +511,7 @@ def multiway_registration(
 
     # Save execution parameters
     params = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(UTC).astimezone().isoformat(),
         "data_dir": str(data_path),
         "output_dir": str(output_path),
         "voxel_size_input": voxel_size_input,

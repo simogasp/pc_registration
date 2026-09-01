@@ -1,10 +1,11 @@
+#! /usr/bin/env python3
 """Test script to verify the plane annotation with perfect planar data."""
+
+import sys
+from pathlib import Path
 
 import numpy as np
 import open3d as o3d
-from pathlib import Path
-import sys
-from typing import Tuple
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -18,7 +19,7 @@ MARGIN = 0.01
 RANDOM_SEED = 42
 
 
-def get_plane_basis(normal: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_plane_basis(normal: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Compute two orthogonal basis vectors in the plane perpendicular to the normal.
 
     Args:
@@ -211,7 +212,7 @@ def test_planar_obb_generic(
         print(f"  ✓ All assertions passed for {plane_name}!")
         return True
 
-    except Exception as e:
+    except ValueError as e:
         print(f"  ✗ Error for {plane_name}: {e}")
         import traceback
 
@@ -273,7 +274,7 @@ def test_3d_obb_fallback() -> bool:
 
         return True
 
-    except Exception as e:
+    except ValueError as e:
         print(f"  ✗ Error: {e}")
         import traceback
 

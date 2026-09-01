@@ -1,6 +1,5 @@
 """Transformation and rotation utilities."""
 
-from typing import Tuple
 import numpy as np
 import numpy.typing as npt
 
@@ -31,7 +30,7 @@ def rototranslation_from_rotation_translation(
     return T
 
 
-def axis_angle_from_rotation(rot_mat: np.ndarray) -> Tuple[np.ndarray, float]:
+def axis_angle_from_rotation(rot_mat: np.ndarray) -> tuple[np.ndarray, float]:
     r"""Convert a rotation matrix to axis-angle representation.
 
     Extracts the rotation axis and angle from a 3x3 rotation matrix using
@@ -202,7 +201,7 @@ def rotation_error_angle(rot_est: np.ndarray, rot_gt: np.ndarray) -> float:
 
 def translation_error(
     rot_est: np.ndarray, t_est: np.ndarray, rot_gt: np.ndarray, t_gt: np.ndarray
-) -> Tuple[float, npt.NDArray[np.floating]]:
+) -> tuple[float, npt.NDArray[np.floating]]:
     r"""Calculate the translation error between two transformations.
 
     Computes the translation error accounting for the rotation difference.
@@ -234,7 +233,7 @@ def translation_error(
     return norm, t_err  # (norm, vector)
 
 
-def transformation_error(t_est: np.ndarray, t_gt: np.ndarray) -> Tuple[float, float]:
+def transformation_error(t_est: np.ndarray, t_gt: np.ndarray) -> tuple[float, float]:
     r"""Calculate both rotation and translation errors between two transformations.
 
     Decomposes two 4x4 transformation matrices into rotation and translation
@@ -312,9 +311,7 @@ def is_rotation_matrix(mat: np.ndarray) -> bool:
     if not np.allclose(mat.T @ mat, np.eye(3)):
         return False
     # Check determinant
-    if not np.isclose(np.linalg.det(mat), 1):
-        return False
-    return True
+    return np.isclose(np.linalg.det(mat), 1)
 
 
 def rotation_aligning_two_directions(

@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Visualize annotated meshes with multiple visualization modes.
 
 This script loads annotated mesh data and provides interactive visualization
@@ -13,15 +14,14 @@ Controls:
 - Press 'Q' or ESC: Quit
 """
 
+import argparse
 import json
 import logging
-import numpy as np
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-import argparse
 
-import open3d as o3d
 import matplotlib.pyplot as plt
+import numpy as np
+import open3d as o3d
 from matplotlib.colors import to_rgb
 
 from registration.utils.logging import setup_logging
@@ -34,10 +34,10 @@ UNLABELED_COLOR = np.array([0.5, 0.5, 0.5])
 
 def load_annotated_mesh(
     ply_path: str,
-) -> Tuple[
+) -> tuple[
     o3d.geometry.TriangleMesh,
-    Optional[Dict[str, np.ndarray]],
-    Optional[Dict[str, np.ndarray]],
+    dict[str, np.ndarray] | None,
+    dict[str, np.ndarray] | None,
 ]:
     """Load annotated mesh PLY file with custom vertex and face properties.
 
@@ -197,7 +197,7 @@ def load_annotated_mesh(
     return mesh, vertex_annotations, face_annotations
 
 
-def load_primitives(json_path: str) -> List[Dict]:
+def load_primitives(json_path: str) -> list[dict]:
     """Load primitives from JSON file.
 
     Args:
@@ -215,7 +215,7 @@ def load_primitives(json_path: str) -> List[Dict]:
     return data.get("primitives", [])
 
 
-def load_semantic(json_path: str) -> Tuple[Dict[str, str], List[Dict]]:
+def load_semantic(json_path: str) -> tuple[dict[str, str], list[dict]]:
     """Load semantic information from JSON file.
 
     Args:
@@ -285,7 +285,7 @@ def get_n_colors(n: int, seed: int = 42) -> np.ndarray:
         return generate_colors(n, seed=seed)
 
 
-def create_obb_lineset(obb_data: Dict) -> o3d.geometry.LineSet:
+def create_obb_lineset(obb_data: dict) -> o3d.geometry.LineSet:
     """Create a LineSet representing an oriented bounding box.
 
     Args:

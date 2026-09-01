@@ -1,8 +1,10 @@
+#! /usr/bin/env python3
 """Create a test PLY file with cylindrical data for testing."""
+
+from pathlib import Path
 
 import numpy as np
 import open3d as o3d
-from pathlib import Path
 
 
 def create_cylinder_point_cloud(

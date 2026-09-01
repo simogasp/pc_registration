@@ -59,14 +59,15 @@ Example test structure:
 import pytest
 from your_module import your_function
 
+
 class TestYourFunction:
     """Tests for your_function."""
-    
+
     def test_basic_case(self):
         """Test basic functionality."""
         result = your_function(input_data)
         assert result == expected_output
-    
+
     def test_edge_case(self):
         """Test edge case."""
         with pytest.raises(ValueError):

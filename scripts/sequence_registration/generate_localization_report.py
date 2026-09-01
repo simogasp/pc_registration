@@ -23,23 +23,22 @@ import argparse
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 from registration.utils.logging import setup_logging
 
 logger = logging.getLogger(__name__)
 
 # Method name mapping from directory prefix to display name.
-METHOD_DISPLAY: Dict[str, str] = {
+METHOD_DISPLAY: dict[str, str] = {
     "ransac": "RANSAC only",
     "ransac_icp": "RANSAC + ICP",
     "ransac_gicp": "RANSAC + GICP",
 }
 
 # Canonical column order used throughout the report.
-METHOD_ORDER: List[str] = ["ransac", "ransac_icp", "ransac_gicp"]
+METHOD_ORDER: list[str] = ["ransac", "ransac_icp", "ransac_gicp"]
 
 # Default success rate thresholds (matching plot_localization_comparison.py defaults).
 DEFAULT_MAX_ROT_ERR_DEG: float = 2.0
@@ -49,7 +48,7 @@ _DIR_PATTERN = re.compile(r"^(ransac(?:_icp|_gicp)?)_vs(\d+)$")
 _COMPARISON_DIR_PATTERN = re.compile(r"^comparison_ref_vs(\d+)$")
 
 
-def parse_method_and_voxel(dirname: str) -> Optional[Tuple[str, int]]:
+def parse_method_and_voxel(dirname: str) -> tuple[str, int] | None:
     """Parse the method key and RANSAC voxel size from a directory name.
 
     Args:
@@ -64,7 +63,7 @@ def parse_method_and_voxel(dirname: str) -> Optional[Tuple[str, int]]:
     return match.group(1), int(match.group(2))
 
 
-def find_method_dirs(comparison_dir: Path) -> Dict[int, Dict[str, Path]]:
+def find_method_dirs(comparison_dir: Path) -> dict[int, dict[str, Path]]:
     """Discover method subdirectories grouped by RANSAC voxel size.
 
     Args:
@@ -73,7 +72,7 @@ def find_method_dirs(comparison_dir: Path) -> Dict[int, Dict[str, Path]]:
     Returns:
         Nested dict mapping voxel_size to a dict of method_key -> path.
     """
-    result: Dict[int, Dict[str, Path]] = {}
+    result: dict[int, dict[str, Path]] = {}
     for child in sorted(comparison_dir.iterdir()):
         if not child.is_dir():
             continue
@@ -87,7 +86,7 @@ def find_method_dirs(comparison_dir: Path) -> Dict[int, Dict[str, Path]]:
     return result
 
 
-def load_results_json(path: Path) -> Optional[dict]:
+def load_results_json(path: Path) -> dict | None:
     """Load and return a localization_results.json file.
 
     Args:
@@ -108,8 +107,8 @@ def load_results_json(path: Path) -> Optional[dict]:
 
 
 def compute_success_rate(
-    rot_errors: List[float],
-    transl_errors: List[float],
+    rot_errors: list[float],
+    transl_errors: list[float],
     max_rot: float,
     max_transl: float,
 ) -> float:
@@ -134,7 +133,7 @@ def compute_success_rate(
     return successes / n
 
 
-def parse_refinement_voxel(comparison_dir: Path) -> Optional[int]:
+def parse_refinement_voxel(comparison_dir: Path) -> int | None:
     """Extract the refinement voxel size from a comparison directory name.
 
     Args:
@@ -149,7 +148,7 @@ def parse_refinement_voxel(comparison_dir: Path) -> Optional[int]:
     return int(match.group(1))
 
 
-def find_comparison_dirs(input_dir: Path) -> List[Path]:
+def find_comparison_dirs(input_dir: Path) -> list[Path]:
     """Find all comparison_ref_vsXX subdirectories within input_dir.
 
     Directories are sorted by their numeric voxel size, not lexicographically.
@@ -165,7 +164,7 @@ def find_comparison_dirs(input_dir: Path) -> List[Path]:
     return sorted(dirs, key=lambda d: parse_refinement_voxel(d) or 0)
 
 
-def _fmt(value: Optional[float], decimals: int = 2) -> str:
+def _fmt(value: float | None, decimals: int = 2) -> str:
     """Format a float value for display, returning 'N/A' if None.
 
     Args:
@@ -180,7 +179,7 @@ def _fmt(value: Optional[float], decimals: int = 2) -> str:
     return f"{value:.{decimals}f}"
 
 
-def _get_stat(data: dict, metric: str, stat: str) -> Optional[float]:
+def _get_stat(data: dict, metric: str, stat: str) -> float | None:
     """Safely retrieve a nested statistic from a results dict.
 
     Args:
@@ -197,7 +196,7 @@ def _get_stat(data: dict, metric: str, stat: str) -> Optional[float]:
         return None
 
 
-def _relative_if_exists(path: Path, base: Path) -> Optional[str]:
+def _relative_if_exists(path: Path, base: Path) -> str | None:
     """Return a relative path string if the file exists, or None.
 
     Args:
@@ -213,7 +212,7 @@ def _relative_if_exists(path: Path, base: Path) -> Optional[str]:
 
 
 def build_stats_table(
-    method_results: Dict[str, Optional[dict]],
+    method_results: dict[str, dict | None],
     max_rot: float,
     max_transl: float,
 ) -> str:
@@ -269,8 +268,8 @@ def build_stats_table(
 
 
 def build_overview_table(
-    all_data: Dict[int, Dict[str, Optional[dict]]],
-    voxel_sizes: List[int],
+    all_data: dict[int, dict[str, dict | None]],
+    voxel_sizes: list[int],
     max_rot: float,
     max_transl: float,
 ) -> str:
@@ -328,8 +327,8 @@ def build_overview_table(
 
 
 def build_image_table(
-    image_paths: List[Optional[str]],
-    column_headers: List[str],
+    image_paths: list[str | None],
+    column_headers: list[str],
 ) -> str:
     """Build a markdown table row with inline images, one image per column.
 
@@ -346,12 +345,12 @@ def build_image_table(
     for path, alt in zip(image_paths, column_headers):
         cells.append(f"![]({path})" if path else f"_{alt} not available_")
     image_row = "| " + " | ".join(cells) + " |"
-    return "\n".join([header, separator, image_row])
+    return f"{header}\n{separator}\n{image_row}"
 
 
 def build_per_voxel_section(
     voxel_size: int,
-    method_dirs: Dict[str, Path],
+    method_dirs: dict[str, Path],
     comparison_dir: Path,
     max_rot: float,
     max_transl: float,
@@ -368,7 +367,7 @@ def build_per_voxel_section(
     Returns:
         Markdown string enclosed in HTML <details>/<summary> tags.
     """
-    method_results: Dict[str, Optional[dict]] = {}
+    method_results: dict[str, dict | None] = {}
     for key in METHOD_ORDER:
         path = method_dirs.get(key)
         method_results[key] = (
@@ -466,7 +465,7 @@ def _build_per_voxel_comp_plots(
     return "\n\n#### Comparison Plots\n\n" + "\n\n".join(parts) + "\n"
 
 
-def _build_param_block(method_dirs: Dict[str, Path], comparison_dir: Path) -> str:
+def _build_param_block(method_dirs: dict[str, Path], comparison_dir: Path) -> str:
     """Build a bullet list with per-method run parameters.
 
     Args:
@@ -537,7 +536,7 @@ def embed_aggregate_plots(comparison_dir: Path) -> str:
 
 def generate_single_report(
     comparison_dir: Path,
-    output_path: Optional[Path],
+    output_path: Path | None,
     max_rot: float,
     max_transl: float,
 ) -> None:
@@ -565,7 +564,7 @@ def generate_single_report(
 
     voxel_sizes = sorted(method_dirs_by_voxel.keys())
 
-    all_data: Dict[int, Dict[str, Optional[dict]]] = {
+    all_data: dict[int, dict[str, dict | None]] = {
         vs: {
             key: load_results_json(path / "localization_results.json")
             for key, path in method_dirs_by_voxel[vs].items()
@@ -573,7 +572,7 @@ def generate_single_report(
         for vs in voxel_sizes
     }
 
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
     voxel_sizes_str = ", ".join(str(v) for v in voxel_sizes)
 
     blocks = [
@@ -638,7 +637,7 @@ def generate_single_report(
 
 def generate_index_report(
     top_dir: Path,
-    comparison_dirs: List[Path],
+    comparison_dirs: list[Path],
     output_path: Path,
     max_rot: float,
     max_transl: float,
@@ -652,7 +651,7 @@ def generate_index_report(
         max_rot: Rotation error threshold used for individual reports.
         max_transl: Translation error threshold used for individual reports.
     """
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
     lines = [
         f"# Localization Comparison Index: {top_dir.name}",
         "",

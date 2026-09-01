@@ -27,16 +27,15 @@ import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
-from typing import List
 
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
 import numpy as np
 import open3d as o3d
+from registration_common import read_poses_from_txt, scale_translation, write_pose_json
 
 from registration.utils.logging import setup_logging
-from registration_common import read_poses_from_txt, scale_translation, write_pose_json
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ def _convert_worker(args: tuple) -> str:
     return output_path.name
 
 
-def find_xyz_files(data_dir: Path) -> List[Path]:
+def find_xyz_files(data_dir: Path) -> list[Path]:
     """Find all XYZ point cloud files in a directory, sorted numerically by stem.
 
     Args:
@@ -147,7 +146,7 @@ def convert_xyz_to_ply(xyz_path: Path, output_path: Path, scale: float = 1.0) ->
 
 
 def convert_all_xyz_files(
-    xyz_files: List[Path], output_dir: Path, scale: float = 1.0, workers: int = 1
+    xyz_files: list[Path], output_dir: Path, scale: float = 1.0, workers: int = 1
 ) -> None:
     """Convert a list of XYZ files to binary PLY files in the output directory.
 
@@ -180,8 +179,8 @@ def convert_all_xyz_files(
 
 
 def write_pose_jsons(
-    poses: List[np.ndarray],
-    xyz_files: List[Path],
+    poses: list[np.ndarray],
+    xyz_files: list[Path],
     output_dir: Path,
     translation_scale: float = 1.0,
 ) -> None:

@@ -10,35 +10,34 @@ two output maps:
 
 import argparse
 import logging
-from datetime import datetime
+
+# Add scripts directory to path for imports
+import sys
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Tuple, Optional
 
 import open3d as o3d
 
 from registration.utils.logging import setup_logging
 
-# Add scripts directory to path for imports
-import sys
-
 scripts_dir = Path(__file__).parent
 if str(scripts_dir) not in sys.path:
     sys.path.insert(0, str(scripts_dir))
 
-from registration_common import (  # noqa: E402
-    find_scan_pairs,
-    load_transformation_matrix,
-    load_and_transform_scan,
-    remove_outliers,
+from registration_common import (
     filter_distant_points,
-    save_point_cloud_binary,
+    find_scan_pairs,
+    load_and_transform_scan,
+    load_transformation_matrix,
+    remove_outliers,
     save_parameters,
+    save_point_cloud_binary,
 )
 
 logger = logging.getLogger(__name__)
 
 
-def process_all_scans(pairs: List[Tuple[Path, Path]]) -> List[o3d.geometry.PointCloud]:
+def process_all_scans(pairs: list[tuple[Path, Path]]) -> list[o3d.geometry.PointCloud]:
     """Load and transform all scan pairs.
 
     Args:
@@ -68,7 +67,7 @@ def process_all_scans(pairs: List[Tuple[Path, Path]]) -> List[o3d.geometry.Point
 
 
 def create_raw_map(
-    transformed_scans: List[o3d.geometry.PointCloud],
+    transformed_scans: list[o3d.geometry.PointCloud],
 ) -> o3d.geometry.PointCloud:
     """Create raw map by concatenating all transformed point clouds.
 
@@ -92,7 +91,7 @@ def create_raw_map(
 
 
 def create_fused_map(
-    transformed_scans: List[o3d.geometry.PointCloud], voxel_size: float = 10.0
+    transformed_scans: list[o3d.geometry.PointCloud], voxel_size: float = 10.0
 ) -> o3d.geometry.PointCloud:
     """Create fused map by merging transformed scans with voxel downsampling.
 
@@ -128,10 +127,10 @@ def fuse_scans(
     outlier_nb_neighbors: int = 20,
     outlier_std_ratio: float = 2.0,
     filter_distant_flag: bool = False,
-    max_distance: Optional[float] = None,
+    max_distance: float | None = None,
     distance_percentile: float = 99.0,
-    start_scan: Optional[int] = None,
-    end_scan: Optional[int] = None,
+    start_scan: int | None = None,
+    end_scan: int | None = None,
     step: int = 1,
 ):
     """Main function to fuse multiple scans into map files.
@@ -200,7 +199,7 @@ def fuse_scans(
 
     # Save execution parameters
     params = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(UTC).astimezone().isoformat(),
         "data_dir": str(data_path),
         "output_dir": str(output_path),
         "voxel_size": voxel_size,

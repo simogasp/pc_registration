@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """Mesh annotation script for geometric and semantic labeling.
 
 This script annotates triangular meshes with geometric primitives and semantic information.
@@ -7,12 +8,10 @@ It fits primitives to mesh vertices and annotates both vertices and faces.
 import json
 import logging
 import shutil
-import numpy as np
 from pathlib import Path
-from typing import Tuple, Dict, Optional
 
+import numpy as np
 import open3d as o3d
-
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ def load_mesh(ply_path: str) -> o3d.geometry.TriangleMesh:
     return mesh
 
 
-def fit_plane(vertices: np.ndarray) -> Tuple[np.ndarray, list]:
+def fit_plane(vertices: np.ndarray) -> tuple[np.ndarray, list]:
     """Fit a plane to vertices using RANSAC.
 
     Args:
@@ -55,7 +54,7 @@ def fit_plane(vertices: np.ndarray) -> Tuple[np.ndarray, list]:
     return np.array([a, b, c, d]), inliers
 
 
-def fit_cylinder(vertices: np.ndarray) -> Tuple[Dict, list]:
+def fit_cylinder(vertices: np.ndarray) -> tuple[dict, list]:
     """Fit a cylinder using PCA-based estimation.
 
     Args:
@@ -86,7 +85,7 @@ def fit_cylinder(vertices: np.ndarray) -> Tuple[Dict, list]:
     }, inliers
 
 
-def compute_obb(vertices: np.ndarray) -> Dict:
+def compute_obb(vertices: np.ndarray) -> dict:
     """Compute an oriented bounding box for vertices.
 
     Args:
@@ -123,7 +122,7 @@ def compute_obb(vertices: np.ndarray) -> Dict:
 
 def compute_planar_obb(
     vertices: np.ndarray, plane_normal: np.ndarray, margin: float = 25
-) -> Dict:
+) -> dict:
     """Compute an oriented bounding box for planar vertices.
 
     For planar data, computes a 2D bounding box in the plane and adds a small
@@ -189,7 +188,7 @@ def add_annotations(
     geom_id: int,
     class_id: int,
     instance_id: int,
-) -> Tuple[o3d.geometry.TriangleMesh, Dict[str, np.ndarray], Dict[str, np.ndarray]]:
+) -> tuple[o3d.geometry.TriangleMesh, dict[str, np.ndarray], dict[str, np.ndarray]]:
     """Prepare annotation attributes for vertices and faces.
 
     Args:
@@ -264,8 +263,8 @@ def add_annotations(
 
 def save_ply_with_annotations(
     mesh: o3d.geometry.TriangleMesh,
-    vertex_annotations: Dict[str, np.ndarray],
-    face_annotations: Dict[str, np.ndarray],
+    vertex_annotations: dict[str, np.ndarray],
+    face_annotations: dict[str, np.ndarray],
     out_path: str,
 ):
     """Save a PLY file with custom annotation properties for vertices and faces.
@@ -364,10 +363,10 @@ def save_ply_with_annotations(
 
 def load_annotated_ply(
     ply_path: str,
-) -> Tuple[
-    Optional[o3d.geometry.TriangleMesh],
-    Optional[Dict[str, np.ndarray]],
-    Optional[Dict[str, np.ndarray]],
+) -> tuple[
+    o3d.geometry.TriangleMesh | None,
+    dict[str, np.ndarray] | None,
+    dict[str, np.ndarray] | None,
 ]:
     """Load an existing annotated PLY mesh with custom properties.
 
@@ -527,12 +526,12 @@ def load_annotated_ply(
 
 def merge_meshes_with_annotations(
     existing_mesh: o3d.geometry.TriangleMesh,
-    existing_vertex_annotations: Dict[str, np.ndarray],
-    existing_face_annotations: Dict[str, np.ndarray],
+    existing_vertex_annotations: dict[str, np.ndarray],
+    existing_face_annotations: dict[str, np.ndarray],
     new_mesh: o3d.geometry.TriangleMesh,
-    new_vertex_annotations: Dict[str, np.ndarray],
-    new_face_annotations: Dict[str, np.ndarray],
-) -> Tuple[o3d.geometry.TriangleMesh, Dict[str, np.ndarray], Dict[str, np.ndarray]]:
+    new_vertex_annotations: dict[str, np.ndarray],
+    new_face_annotations: dict[str, np.ndarray],
+) -> tuple[o3d.geometry.TriangleMesh, dict[str, np.ndarray], dict[str, np.ndarray]]:
     """Merge two meshes with their annotations.
 
     Args:
@@ -624,7 +623,7 @@ def save_primitives(primitives: list, out_path: str):
         shutil.copy2(schema_src, schema_dst)
 
 
-def load_semantic_classes(json_path: str) -> Dict[str, str]:
+def load_semantic_classes(json_path: str) -> dict[str, str]:
     """Load semantic classes from JSON file.
 
     Args:
@@ -657,7 +656,7 @@ def load_semantic_instances(json_path: str) -> list:
 
 
 def save_semantic(
-    semantic_classes: Dict[str, str], semantic_instances: list, out_path: str
+    semantic_classes: dict[str, str], semantic_instances: list, out_path: str
 ):
     """Save semantic information to JSON file.
 
@@ -681,7 +680,7 @@ def annotate(
     class_id: int,
     instance_id: int,
     out_dir: str,
-    semantic_classes_path: Optional[str] = None,
+    semantic_classes_path: str | None = None,
 ):
     """Main annotation pipeline for meshes.
 

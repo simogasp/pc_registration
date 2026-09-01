@@ -10,8 +10,6 @@ interface of Open3D's TransformationEstimation and is designed to be embedded in
 a custom RANSAC loop.
 """
 
-from typing import Tuple
-
 import numpy as np
 import open3d as o3d
 
@@ -45,7 +43,7 @@ def _extract_correspondence_points(
     source: o3d.geometry.PointCloud,
     target: o3d.geometry.PointCloud,
     correspondences: o3d.utility.Vector2iVector,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Extract matched point arrays from source and target using a correspondence set.
 
     Args:

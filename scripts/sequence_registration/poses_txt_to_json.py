@@ -15,21 +15,20 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import List
 
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
 import numpy as np
+from registration_common import read_poses_from_txt, scale_translation, write_pose_json
 
 from registration.utils.logging import setup_logging
-from registration_common import read_poses_from_txt, scale_translation, write_pose_json
 
 logger = logging.getLogger(__name__)
 
 
 def write_all_poses(
-    poses: List[np.ndarray], output_dir: Path, translation_scale: float = 1.0
+    poses: list[np.ndarray], output_dir: Path, translation_scale: float = 1.0
 ) -> None:
     """Write each pose as a numbered JSON file inside output_dir.
 

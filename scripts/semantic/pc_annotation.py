@@ -1,12 +1,12 @@
+#! /usr/bin/env python3
 """Annotate point clouds with semantic labels."""
 
 import json
 import logging
 import shutil
-import numpy as np
 from pathlib import Path
-from typing import Tuple, Dict, Optional
 
+import numpy as np
 import open3d as o3d
 
 from registration.utils.logging import setup_logging
@@ -29,7 +29,7 @@ def load_point_cloud(ply_path: str) -> o3d.geometry.PointCloud:
     return pcd
 
 
-def fit_plane(pcd: o3d.geometry.PointCloud) -> Tuple[np.ndarray, list]:
+def fit_plane(pcd: o3d.geometry.PointCloud) -> tuple[np.ndarray, list]:
     """Fit a plane to the cloud using RANSAC.
 
     Args:
@@ -46,7 +46,7 @@ def fit_plane(pcd: o3d.geometry.PointCloud) -> Tuple[np.ndarray, list]:
     return np.array([a, b, c, d]), inliers
 
 
-def fit_cylinder(pcd: o3d.geometry.PointCloud) -> Tuple[Dict, list]:
+def fit_cylinder(pcd: o3d.geometry.PointCloud) -> tuple[dict, list]:
     """Fit a cylinder using RANSAC.
 
     Args:
@@ -80,7 +80,7 @@ def fit_cylinder(pcd: o3d.geometry.PointCloud) -> Tuple[Dict, list]:
     }, inliers
 
 
-def compute_obb(pcd: o3d.geometry.PointCloud) -> Dict:
+def compute_obb(pcd: o3d.geometry.PointCloud) -> dict:
     """Compute an oriented bounding box for a point cloud.
 
     Args:
@@ -113,7 +113,7 @@ def compute_obb(pcd: o3d.geometry.PointCloud) -> Dict:
 
 def compute_planar_obb(
     pcd: o3d.geometry.PointCloud, plane_normal: np.ndarray, margin: float = 25
-) -> Dict:
+) -> dict:
     """Compute an oriented bounding box for a planar point cloud.
 
     For planar point clouds (where all points are coplanar), computes a 2D
@@ -184,7 +184,7 @@ def compute_planar_obb(
 
 def load_annotated_ply(
     ply_path: str,
-) -> Tuple[Optional[o3d.geometry.PointCloud], Optional[Dict[str, np.ndarray]]]:
+) -> tuple[o3d.geometry.PointCloud | None, dict[str, np.ndarray] | None]:
     """Load an existing annotated PLY file with custom properties.
 
     Args:
@@ -289,10 +289,10 @@ def load_annotated_ply(
 
 def merge_point_clouds_with_annotations(
     existing_pcd: o3d.geometry.PointCloud,
-    existing_annotations: Dict[str, np.ndarray],
+    existing_annotations: dict[str, np.ndarray],
     new_pcd: o3d.geometry.PointCloud,
-    new_annotations: Dict[str, np.ndarray],
-) -> Tuple[o3d.geometry.PointCloud, Dict[str, np.ndarray]]:
+    new_annotations: dict[str, np.ndarray],
+) -> tuple[o3d.geometry.PointCloud, dict[str, np.ndarray]]:
     """Merge two point clouds with their annotations.
 
     Args:
@@ -332,7 +332,7 @@ def add_annotations(
     geom_id: int,
     class_id: int,
     instance_id: int,
-) -> Tuple[o3d.geometry.PointCloud, Dict[str, np.ndarray]]:
+) -> tuple[o3d.geometry.PointCloud, dict[str, np.ndarray]]:
     """Prepare annotation attributes for a point cloud.
 
     Args:
@@ -367,7 +367,7 @@ def add_annotations(
 
 
 def save_ply_with_annotations(
-    pcd: o3d.geometry.PointCloud, annotations: Dict[str, np.ndarray], out_path: str
+    pcd: o3d.geometry.PointCloud, annotations: dict[str, np.ndarray], out_path: str
 ):
     """Save a PLY file with custom annotation properties.
 
@@ -476,7 +476,7 @@ def save_primitives(primitives: list, out_path: str):
         shutil.copy2(schema_src, schema_dst)
 
 
-def load_semantic_classes(json_path: str) -> Dict[str, str]:
+def load_semantic_classes(json_path: str) -> dict[str, str]:
     """Load semantic classes from JSON file.
 
     Args:
@@ -509,7 +509,7 @@ def load_semantic_instances(json_path: str) -> list:
 
 
 def save_semantic(
-    semantic_classes: Dict[str, str], semantic_instances: list, out_path: str
+    semantic_classes: dict[str, str], semantic_instances: list, out_path: str
 ):
     """Save semantic information to JSON file.
 
@@ -526,7 +526,7 @@ def save_semantic(
         json.dump(data, f, indent=2)
 
 
-def save_json(data: Dict, out_path: str):
+def save_json(data: dict, out_path: str):
     """Save JSON dictionary to file.
 
     Args:
@@ -544,7 +544,7 @@ def annotate(
     class_id: int,
     instance_id: int,
     out_dir: str,
-    semantic_classes_path: Optional[str] = None,
+    semantic_classes_path: str | None = None,
 ):
     """Main annotation pipeline.
 
