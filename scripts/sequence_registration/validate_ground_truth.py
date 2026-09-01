@@ -158,7 +158,6 @@ def validate_consecutive_pairs(
     results = []
 
     # Process pairs with given step
-    pair_count = 0
     for i, (source_ply, source_json) in enumerate(pairs):
         # Check if target index is within range
         target_idx = i + step
@@ -168,10 +167,9 @@ def validate_consecutive_pairs(
         target_ply, target_json = pairs[target_idx]
 
         logger.info(
-            f"\nPair {pair_count}/{num_pairs - 1}: {source_ply.stem} -> {target_ply.stem} (step={step})"
+            f"\nPair {i}/{num_pairs - 1}: {source_ply.stem} -> {target_ply.stem} (step={step})"
         )
         logger.info("-" * 80)
-        pair_count += 1
 
         # Load point clouds
         logger.info("  Loading point clouds...")
@@ -237,7 +235,7 @@ def validate_consecutive_pairs(
 
         # Store result for JSON output
         result_entry = {
-            "pair_index": pair_count - 1,
+            "pair_index": i,
             "source_index": i,
             "target_index": target_idx,
             "source": source_ply.stem,
