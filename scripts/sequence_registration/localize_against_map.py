@@ -126,7 +126,7 @@ def localize_scan_to_map(
     scan: o3d.geometry.PointCloud,
     global_map: o3d.geometry.PointCloud,
     max_correspondence_distance: float,
-    init_transformation: np.ndarray = np.eye(4),
+    init_transformation: np.ndarray | None = None,
     max_iteration: int = 50,
 ) -> tuple:
     """Localize a scan against a global map using ICP.
@@ -141,6 +141,9 @@ def localize_scan_to_map(
     Returns:
         Tuple of (estimated_pose, registration_result).
     """
+    if init_transformation is None:
+        init_transformation = np.eye(4)
+
     result = o3d.pipelines.registration.registration_icp(
         scan,
         global_map,

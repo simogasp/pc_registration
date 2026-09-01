@@ -183,7 +183,7 @@ def pairwise_registration(
     source: o3d.geometry.PointCloud,
     target: o3d.geometry.PointCloud,
     max_correspondence_distance: float,
-    init_transformation: np.ndarray = np.eye(4),
+    init_transformation: np.ndarray | None = None,
     max_iteration: int = 30,
     verbose: bool = True,
     use_generalized_icp: bool = False,
@@ -203,6 +203,9 @@ def pairwise_registration(
         Tuple of (transformation matrix, registration result).
     """
     algorithm_name = "Generalized ICP (GICP)" if use_generalized_icp else "ICP"
+
+    if init_transformation is None:
+        init_transformation = np.eye(4)
 
     if verbose:
         logger.debug(f"  Pairwise {algorithm_name} registration...")

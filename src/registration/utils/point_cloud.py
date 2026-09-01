@@ -64,8 +64,8 @@ def rough_scale_point_cloud_from_file(pcd_filename: str) -> float:
 def align_centers(
     source: o3d.geometry.PointCloud,
     target: o3d.geometry.PointCloud,
-    trans_init: np.ndarray = np.identity(4),
-    correction: np.ndarray = np.identity(4),
+    trans_init: np.ndarray | None = None,
+    correction: np.ndarray | None = None,
 ) -> np.ndarray:
     r"""Compute a transformation to align the centroids of two point clouds.
 
@@ -108,6 +108,11 @@ def align_centers(
         >>> T_align = align_centers(source, target)
         >>> source.transform(T_align)  # Apply alignment
     """
+    if correction is None:
+        correction = np.identity(4)
+    if trans_init is None:
+        trans_init = np.identity(4)
+
     source.transform(correction)
     target.transform(correction)
 
@@ -127,8 +132,8 @@ def align_centers(
 def align_centers_from_files(
     source_file: str,
     target_file: str,
-    trans_init: np.ndarray = np.identity(4),
-    correction: np.ndarray = np.identity(4),
+    trans_init: np.ndarray | None = None,
+    correction: np.ndarray | None = None,
 ) -> np.ndarray:
     """Compute a transformation to align centroids from point cloud files.
 
@@ -159,6 +164,11 @@ def align_centers_from_files(
         ... )
         >>> print(f"Translation: {T_align[:3, 3]}")
     """
+    if trans_init is None:
+        trans_init = np.eye(4)
+    if correction is None:
+        correction = np.eye(4)
+
     source = o3d.io.read_point_cloud(source_file)
     target = o3d.io.read_point_cloud(target_file)
 
