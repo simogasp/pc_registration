@@ -115,11 +115,6 @@ if __name__ == "__main__":
         print(f"Error: File not found: {ply_path}")
         sys.exit(1)
 
-    try:
-        verify_annotations(ply_path)
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-
-        traceback.print_exc()
+    if not verify_annotations(ply_path):
+        print("✗ Verification failed.")
         sys.exit(1)
