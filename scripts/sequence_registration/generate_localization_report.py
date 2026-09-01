@@ -345,7 +345,7 @@ def build_image_table(
     for path, alt in zip(image_paths, column_headers):
         cells.append(f"![]({path})" if path else f"_{alt} not available_")
     image_row = "| " + " | ".join(cells) + " |"
-    return "\n".join([header, separator, image_row])
+    return f"{header}\n{separator}\n{image_row}"
 
 
 def build_per_voxel_section(
