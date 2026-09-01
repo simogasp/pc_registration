@@ -17,7 +17,7 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -560,7 +560,7 @@ def localize_scans(
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         params = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).astimezone().isoformat(),
             "data_dir": str(data_path),
             "map_file": str(map_path),
             "voxel_size": voxel_size,

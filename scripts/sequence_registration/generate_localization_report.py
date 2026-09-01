@@ -23,7 +23,7 @@ import argparse
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from registration.utils.logging import setup_logging
@@ -572,7 +572,7 @@ def generate_single_report(
         for vs in voxel_sizes
     }
 
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
     voxel_sizes_str = ", ".join(str(v) for v in voxel_sizes)
 
     blocks = [
@@ -651,7 +651,7 @@ def generate_index_report(
         max_rot: Rotation error threshold used for individual reports.
         max_transl: Translation error threshold used for individual reports.
     """
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(UTC).astimezone().strftime("%Y-%m-%d %H:%M:%S")
     lines = [
         f"# Localization Comparison Index: {top_dir.name}",
         "",

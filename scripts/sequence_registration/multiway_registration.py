@@ -11,7 +11,7 @@ import logging
 
 # Add scripts directory to path for imports
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -511,7 +511,7 @@ def multiway_registration(
 
     # Save execution parameters
     params = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(UTC).astimezone().isoformat(),
         "data_dir": str(data_path),
         "output_dir": str(output_path),
         "voxel_size_input": voxel_size_input,
