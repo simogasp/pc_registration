@@ -212,7 +212,7 @@ def test_planar_obb_generic(
         print(f"  ✓ All assertions passed for {plane_name}!")
         return True
 
-    except Exception as e:
+    except ValueError as e:
         print(f"  ✗ Error for {plane_name}: {e}")
         import traceback
 
@@ -274,7 +274,7 @@ def test_3d_obb_fallback() -> bool:
 
         return True
 
-    except Exception as e:
+    except ValueError as e:
         print(f"  ✗ Error: {e}")
         import traceback
 
